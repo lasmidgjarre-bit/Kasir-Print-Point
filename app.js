@@ -42,13 +42,109 @@ function switchTab(tabName) {
         if (target) target.classList.add('active');
 
         // Update nav button
-        const btnIndex = tabName === 'kasir' ? 0 : 1;
+        let btnIndex = 0;
+        if (tabName === 'kasir') btnIndex = 0;
+        else if (tabName === 'files') btnIndex = 1;
+        else if (tabName === 'barang') btnIndex = 2;
+
         const btns = document.querySelectorAll('.nav-btn');
+        // Note: The nav buttons structure changed in index.html, need to be careful with index or use logic based on text
+        // Improved logic: find button that calls this SwitchTab
+        // But simple index fix for now:
+        // Nav 1: Kasir, Nav 2: File Masuk, Nav 3: Data Barang
         if (btns[btnIndex]) btns[btnIndex].classList.add('active');
 
         if (tabName === 'barang') loadProducts();
+        if (tabName === 'files') loadFiles();
     } catch (e) {
         alert("Error switching tab: " + e.message);
+    }
+}
+
+// ... existing code ...
+
+// --- FILE MASUK LOGIC ---
+async function loadFiles() {
+    const tbody = document.getElementById('files-body');
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Loading...</td></tr>';
+
+    const { data, error } = await db
+        .from('print_queue')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error(error);
+        toast("Gagal ambil data file");
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Gagal mengambil data. Pastikan tabel database sudah dibuat.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = '';
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Belum ada file masuk.</td></tr>';
+        return;
+    }
+
+    data.forEach(item => {
+        const tr = document.createElement('tr');
+        const date = new Date(item.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+        let statusBadge = `<span style="background:#e2e8f0; color:#475569; padding:4px 8px; border-radius:4px; font-size:0.8rem;">${item.status}</span>`;
+        if (item.status === 'Selesai') {
+            statusBadge = `<span style="background:#dcfce7; color:#16a34a; padding:4px 8px; border-radius:4px; font-size:0.8rem;">Selesai</span>`;
+        }
+
+        tr.innerHTML = `
+            <td>${date}</td>
+            <td>
+                <div style="font-weight:600;">${item.tipe_print}</div>
+                <div style="font-size:0.8rem; color:#64748b;">${item.filename || 'No Name'}</div>
+            </td>
+            <td>${item.catatan || '-'}</td>
+            <td>${statusBadge}</td>
+            <td>
+                <div style="display:flex; gap:5px;">
+                    <a href="${item.file_url}" target="_blank" class="btn-icon" style="background:#eff6ff; color:#2563eb; text-decoration:none;" title="Download/Lihat">
+                        <i class="fa-solid fa-download"></i>
+                    </a>
+                    <button class="btn-icon" onclick="markFileDone(${item.id})" style="background:#f0fdf4; color:#16a34a;" title="Tandai Selesai">
+                        <i class="fa-solid fa-check"></i>
+                    </button>
+                    <button class="btn-icon" onclick="deleteFile(${item.id})" style="background:#fef2f2; color:#ef4444;" title="Hapus">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+async function markFileDone(id) {
+    const { error } = await db
+        .from('print_queue')
+        .update({ status: 'Selesai' })
+        .eq('id', id);
+
+    if (error) toast("Gagal update status");
+    else {
+        toast("Status diperbarui");
+        loadFiles();
+    }
+}
+
+async function deleteFile(id) {
+    if (!confirm("Hapus file ini dari daftar?")) return;
+
+    const { error } = await db
+        .from('print_queue')
+        .delete()
+        .eq('id', id);
+
+    if (error) toast("Gagal hapus");
+    else {
+        loadFiles();
     }
 }
 
