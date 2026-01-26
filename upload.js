@@ -66,19 +66,8 @@ async function handleUpload(e) {
     btn.disabled = true;
 
     try {
-        let fileUrl;
-
-        // --- HYBRID UPLOAD LOGIC ---
-        // Jika Gambar (JPG, PNG, GIF) -> ImageKit
-        if (file.type.startsWith('image/')) {
-            console.log("Mendeteksi Gambar, mengupload ke ImageKit...");
-            fileUrl = await uploadToImageKit(file);
-        }
-        // Jika Dokumen (PDF, DOCX, dll) -> Supabase Storage
-        else {
-            console.log("Mendeteksi Dokumen, mengupload ke Supabase...");
-            fileUrl = await uploadToSupabase(file);
-        }
+        // --- IMAGEKIT UPLOAD LOGIC (ALL FILES) ---
+        const fileUrl = await uploadToImageKit(file);
 
         // 2. Save Metadata to Supabase Table 'print_queue'
         const { error } = await db
