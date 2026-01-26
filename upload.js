@@ -138,7 +138,7 @@ async function uploadToSupabase(file) {
     const fileName = `${timestamp}_${sanitizedName}`;
 
     const { data, error } = await db.storage
-        .from('customer-uploads') // Bucket name
+        .from('File Dokumen') // Bucket name
         .upload(fileName, file, {
             cacheControl: '3600',
             upsert: false
@@ -150,7 +150,7 @@ async function uploadToSupabase(file) {
 
     // Get Public URL
     const { data: publicData } = db.storage
-        .from('customer-uploads')
+        .from('File Dokumen')
         .getPublicUrl(fileName);
 
     return publicData.publicUrl;
