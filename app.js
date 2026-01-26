@@ -158,6 +158,28 @@ async function addProduct() {
     }
 }
 
+/* Splash Screen Logic */
+document.addEventListener('DOMContentLoaded', () => {
+    // Wait for the loading animation (2s) plus a little buffer
+    setTimeout(() => {
+        const splash = document.getElementById('splash-screen');
+        if (splash) {
+            splash.classList.add('hidden');
+            // Remove from DOM after transition to free up resources
+            setTimeout(() => {
+                splash.remove();
+            }, 500);
+        }
+    }, 2500);
+});
+
+// Initial Load
+document.addEventListener('DOMContentLoaded', () => {
+    loadProducts();
+    updateCartTable();
+});
+
+
 // --- IMAGEKIT LOGIC ---
 async function uploadToImageKit(file) {
     const formData = new FormData();
