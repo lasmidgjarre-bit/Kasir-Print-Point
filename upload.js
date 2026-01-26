@@ -1,6 +1,8 @@
 // Configuration
 const SUPABASE_URL = "https://grjgdejlbebgxbrnufrz.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdyamdkZWpsYmViZ3hicm51ZnJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzMjY3NTgsImV4cCI6MjA4NDkwMjc1OH0.DeQ07otbbG6lB5TVqHsF1ntDzOdxo2t_laQV0i8EFR0";
+const IMAGEKIT_PRIVATE_KEY = "private_ZU1fCm4YTcBkPHOjrxjvoeM14EQ=";
+const IMAGEKIT_ENDPOINT = "https://upload.imagekit.io/api/v1/files";
 
 // Init Supabase
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -64,8 +66,19 @@ async function handleUpload(e) {
     btn.disabled = true;
 
     try {
-        // 1. Upload to Supabase Storage
-        const fileUrl = await uploadToSupabase(file);
+        let fileUrl;
+
+        // --- HYBRID UPLOAD LOGIC ---
+        // Jika Gambar (JPG, PNG, GIF) -> ImageKit
+        if (file.type.startsWith('image/')) {
+            console.log("Mendeteksi Gambar, mengupload ke ImageKit...");
+            fileUrl = await uploadToImageKit(file);
+        }
+        // Jika Dokumen (PDF, DOCX, dll) -> Supabase Storage
+        else {
+            console.log("Mendeteksi Dokumen, mengupload ke Supabase...");
+            fileUrl = await uploadToSupabase(file);
+        }
 
         // 2. Save Metadata to Supabase Table 'print_queue'
         const { error } = await db
@@ -100,6 +113,24 @@ async function handleUpload(e) {
     }
 }
 
+async function uploadToImageKit(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("fileName", file.name);
+
+    const auth = btoa(IMAGEKIT_PRIVATE_KEY + ":");
+
+    const response = await fetch(IMAGEKIT_ENDPOINT, {
+        method: "POST",
+        headers: { "Authorization": `Basic ${auth}` },
+        body: formData
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Upload ke ImageKit gagal");
+    return data.url;
+}
+
 async function uploadToSupabase(file) {
     // Generate unique name: timestamp_sanitizedfilename
     const timestamp = Date.now();
@@ -114,7 +145,7 @@ async function uploadToSupabase(file) {
         });
 
     if (error) {
-        throw new Error("Upload Storage Gagal: " + error.message);
+        throw new Error("Upload ke Supabase Gagal: " + error.message);
     }
 
     // Get Public URL
