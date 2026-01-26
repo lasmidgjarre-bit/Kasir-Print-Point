@@ -66,8 +66,10 @@ async function handleUpload(e) {
     btn.disabled = true;
 
     try {
-        // --- IMAGEKIT UPLOAD LOGIC (ALL FILES) ---
-        const fileUrl = await uploadToImageKit(file);
+        // --- CLIENT-SIDE UPLOAD (DIRECT TO SUPABASE) ---
+        // Ini adalah "upload di sisi client browser". File dikirim langsung
+        // dari browser pembeli ke 'gudang' Supabase tanpa lewat perantara.
+        const fileUrl = await uploadToSupabase(file);
 
         // 2. Save Metadata to Supabase Table 'print_queue'
         const { error } = await db
@@ -102,23 +104,6 @@ async function handleUpload(e) {
     }
 }
 
-async function uploadToImageKit(file) {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("fileName", file.name);
-
-    const auth = btoa(IMAGEKIT_PRIVATE_KEY + ":");
-
-    const response = await fetch(IMAGEKIT_ENDPOINT, {
-        method: "POST",
-        headers: { "Authorization": `Basic ${auth}` },
-        body: formData
-    });
-
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message || "Upload ke ImageKit gagal");
-    return data.url;
-}
 
 async function uploadToSupabase(file) {
     // Generate unique name: timestamp_sanitizedfilename
@@ -126,18 +111,19 @@ async function uploadToSupabase(file) {
     const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
     const fileName = `${timestamp}_${sanitizedName}`;
 
+    // Upload langsung dari browser ke bucket "File Dokumen"
     const { data, error } = await db.storage
-        .from('File Dokumen') // Bucket name
+        .from('File Dokumen')
         .upload(fileName, file, {
             cacheControl: '3600',
             upsert: false
         });
 
     if (error) {
-        throw new Error("Upload ke Supabase Gagal: " + error.message);
+        throw new Error("Upload Gagal: " + error.message);
     }
 
-    // Get Public URL
+    // Ambil Link Publik
     const { data: publicData } = db.storage
         .from('File Dokumen')
         .getPublicUrl(fileName);
