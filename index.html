@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasir Fotokopi Professional</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header>
+        <h1><i class="fa-solid fa-print"></i> Kasir Fotokopi</h1>
+        <nav>
+            <button class="nav-btn active" onclick="switchTab('kasir')">
+                <i class="fa-solid fa-cash-register"></i> Kasir
+            </button>
+            <button class="nav-btn" onclick="switchTab('barang')">
+                <i class="fa-solid fa-box"></i> Data Barang
+            </button>
+        </nav>
+    </header>
+
+    <main>
+        <!-- TAB 1: KASIR -->
+        <section id="tab-kasir" class="tab-content active">
+            <div class="card">
+                <div class="form-row">
+                    <div class="form-group" style="flex: 0 0 120px;">
+                        <label>Tipe</label>
+                        <select id="kasir-tipe">
+                            <option value="Barang">Barang</option>
+                            <option value="Jasa">Jasa</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 2;">
+                        <label>Nama Barang / Jasa</label>
+                        <div style="position: relative;">
+                            <input type="text" id="kasir-nama" placeholder="Ketik nama manual..." list="produk-list"
+                                onchange="autoFillHarga()">
+                            <!-- Autocomplete Datalist -->
+                            <datalist id="produk-list"></datalist>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Qty</label>
+                        <input type="number" id="kasir-qty" value="1" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Harga (@)</label>
+                        <input type="number" id="kasir-harga" placeholder="0">
+                    </div>
+                    <div class="form-group" style="flex: 0;">
+                        <label>&nbsp;</label>
+                        <button class="btn btn-primary" onclick="addToCart()">
+                            <i class="fa-solid fa-plus"></i> Tambah
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Barang</th>
+                                <th width="100">Qty</th>
+                                <th>Harga</th>
+                                <th>Subtotal</th>
+                                <th width="50">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cart-body">
+                            <!-- Cart items will appear here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="flex-between">
+                    <div></div>
+                    <div class="total-display">
+                        <div class="total-label">Total Pembayaran</div>
+                        <div class="total-amount" id="grand-total">Rp 0</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1.5rem;">
+                    <button class="btn btn-success" onclick="checkout()">
+                        <i class="fa-solid fa-check-circle"></i> BAYAR & SIMPAN
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: DATA BARANG -->
+        <section id="tab-barang" class="tab-content">
+            <div class="flex-between" style="margin-bottom: 1rem;">
+                <h2>Master Data</h2>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-icon" onclick="switchTab('kasir')"
+                        style="background: transparent; border: 1px solid var(--border);">
+                        <i class="fa-solid fa-arrow-left"></i> Kembali
+                    </button>
+                    <button class="btn btn-icon" onclick="loadProducts()">
+                        <i class="fa-solid fa-rotate-right"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="form-row">
+                    <div class="form-group" style="flex: 2;">
+                        <label>Nama Barang</label>
+                        <input type="text" id="prod-nama" placeholder="Contoh: Kertas A4">
+                    </div>
+                    <div class="form-group">
+                        <label>Stok Awal</label>
+                        <input type="number" id="prod-stok" value="0">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Harga Beli (Modal)</label>
+                        <input type="number" id="prod-beli" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Harga Jual</label>
+                        <input type="number" id="prod-jual" placeholder="0">
+                    </div>
+                </div>
+
+                <!-- Camera Upload Section -->
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label>Foto Produk</label>
+                    <div id="camera-container" class="camera-container" style="display:none;">
+                        <video id="camera-preview" autoplay playsinline></video>
+                        <canvas id="camera-canvas" style="display:none;"></canvas>
+                    </div>
+                    <div id="image-preview-container" class="image-preview-container" style="display:none;">
+                        <img id="image-result" src="" alt="Preview Foto">
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                        <button class="btn btn-icon" onclick="startCamera()" id="btn-start-camera" style="flex:1;">
+                            <i class="fa-solid fa-camera"></i> Buka Kamera
+                        </button>
+                        <button class="btn btn-icon" onclick="takeSnapshot()" id="btn-take-snapshot"
+                            style="flex:1; display:none; background: var(--danger); color: white;">
+                            <i class="fa-solid fa-camera-retro"></i> Jepret
+                        </button>
+                        <button class="btn btn-icon" onclick="resetCamera()" id="btn-reset-camera"
+                            style="flex:1; display:none;">
+                            <i class="fa-solid fa-rotate-left"></i> Ulang
+                        </button>
+                    </div>
+                    <!-- Hidden input for file upload fallback -->
+                    <input type="file" id="file-upload" accept="image/*" style="display:none"
+                        onchange="handleFileUpload(this)">
+                    <button class="btn btn-icon" onclick="document.getElementById('file-upload').click()"
+                        style="width:100%; margin-top:0.5rem; border: 1px dashed var(--secondary);">
+                        <i class="fa-solid fa-upload"></i> Atau Upload File
+                    </button>
+                </div>
+                <button class="btn btn-primary" style="width: 100%;" onclick="addProduct()">
+                    <i class="fa-solid fa-save"></i> SIMPAN PRODUK
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nama Barang</th>
+                                <th>Modal</th>
+                                <th>Harga Jual</th>
+                                <th>Stok</th>
+                            </tr>
+                        </thead>
+                        <tbody id="product-body">
+                            <!-- Product list will appear here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Toast -->
+    <div id="toast">Notifikasi</div>
+
+    <!-- Logic -->
+    <script src="app.js"></script>
+</body>
+
+</html>

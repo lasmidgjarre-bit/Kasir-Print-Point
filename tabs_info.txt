@@ -1,0 +1,14 @@
+Version: 0.80.4
+
+--- dir(ft.Tabs) ---
+['__annotations__', '__class__', '__dataclass_fields__', '__dataclass_params__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__getstate__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__match_args__', '__module__', '__ne__', '__new__', '__post_init__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', '_before_update_safe', '_invoke_method', '_migrate_state', '_trigger_event', 'adaptive', 'align', 'animate_align', 'animate_margin', 'animate_offset', 'animate_opacity', 'animate_position', 'animate_rotation', 'animate_scale', 'animate_size', 'aspect_ratio', 'badge', 'before_event', 'before_update', 'bottom', 'build', 'col', 'data', 'did_mount', 'disabled', 'expand', 'expand_loose', 'height', 'init', 'is_isolated', 'key', 'left', 'margin', 'move_to', 'offset', 'on_animation_end', 'on_change', 'opacity', 'page', 'parent', 'ref', 'right', 'rotate', 'rtl', 'scale', 'selected_index', 'tooltip', 'top', 'update', 'visible', 'width', 'will_unmount']
+
+--- ft.Tabs.__init__ varnames ---
+('self', 'content', 'length', 'selected_index', 'animation_duration', 'on_change', 'data', 'key', 'ref', 'expand', 'expand_loose', 'col', 'opacity', 'tooltip', 'badge', 'visible', 'disabled', 'rtl', 'adaptive', 'width', 'height', 'left', 'top', 'right', 'bottom', 'align', 'margin', 'rotate', 'scale', 'offset', 'aspect_ratio', 'animate_opacity', 'animate_size', 'animate_position', 'animate_align', 'animate_margin', 'animate_rotation', 'animate_scale', 'animate_offset', 'on_animation_end')
+
+--- ft.Tabs doc ---
+
+    Used for navigating frequently accessed, distinct content
+    categories. Tabs allow for navigation between two or more content views and relies
+    on text headers to articulate the different sections of content.
+    
