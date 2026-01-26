@@ -9,6 +9,7 @@
     <!-- CSS -->
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="splash.css">
+    <link rel="stylesheet" href="qr.css">
 
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -31,15 +32,31 @@
     <!-- Header -->
     <header>
         <h1><i class="fa-solid fa-print"></i> Kasir Fotokopi</h1>
-        <nav>
-            <button class="nav-btn active" onclick="switchTab('kasir')">
-                <i class="fa-solid fa-cash-register"></i> Kasir
+        <div style="display: flex; gap: 10px;">
+            <button class="nav-btn" onclick="document.getElementById('modal-qr').classList.add('show')">
+                <i class="fa-solid fa-qrcode"></i> QR Upload
             </button>
-            <button class="nav-btn" onclick="switchTab('barang')">
-                <i class="fa-solid fa-box"></i> Data Barang
-            </button>
-        </nav>
+            <nav>
+                <button class="nav-btn active" onclick="switchTab('kasir')">
+                    <i class="fa-solid fa-cash-register"></i> Kasir
+                </button>
+                <button class="nav-btn" onclick="switchTab('barang')">
+                    <i class="fa-solid fa-box"></i> Data Barang
+                </button>
+            </nav>
+        </div>
     </header>
+
+    <!-- QR Modal -->
+    <div id="modal-qr" onclick="this.classList.remove('show')">
+        <div class="qr-content" onclick="event.stopPropagation()">
+            <h2 style="margin-bottom: 1rem; color: var(--primary);">Scan untuk Upload</h2>
+            <img src="qr_upload.png" alt="QR Code Upload">
+            <p style="margin-top: 1rem; color: var(--secondary);">Pelanggan scan ini untuk kirim file</p>
+            <button class="btn btn-primary" onclick="document.getElementById('modal-qr').classList.remove('show')"
+                style="margin-top: 1rem; width: 100%;">Tutup</button>
+        </div>
+    </div>
 
     <main>
         <!-- TAB 1: KASIR -->
