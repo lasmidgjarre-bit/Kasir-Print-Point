@@ -133,6 +133,35 @@
             </div>
         </section>
 
+        <!-- TAB 2: FILE MASUK -->
+        <section id="tab-files" class="tab-content">
+            <div class="flex-between" style="margin-bottom: 1rem;">
+                <h2>File Masuk</h2>
+                <button class="btn btn-icon" onclick="loadFiles()">
+                    <i class="fa-solid fa-rotate-right"></i> Refresh
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Waktu</th>
+                                <th>Nama File</th>
+                                <th>Tipe</th>
+                                <th>Catatan</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="files-body">
+                            <!-- File list will appear here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
         <!-- TAB 2: DATA BARANG -->
         <section id="tab-barang" class="tab-content">
             <div class="flex-between" style="margin-bottom: 1rem;">
