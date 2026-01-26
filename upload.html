@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kirim File - Print Point Barombong</title>
+    <!-- Use the existing styles plus some specific overrides -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="splash.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            background-color: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            /* Center vertically for mobile focus */
+            padding: 0;
+        }
+
+        .container-upload {
+            padding: 2rem;
+            max-width: 500px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .card-upload {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .upload-header h2 {
+            font-size: 1.5rem;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .option-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 1.5rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option-btn:hover,
+        .option-btn.selected {
+            border-color: #2563eb;
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+        .option-btn i {
+            font-size: 2rem;
+        }
+
+        .drop-zone {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            background: #f8fafc;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .drop-zone.dragover {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+
+        .file-info {
+            display: none;
+            margin-top: 1rem;
+            padding: 0.5rem;
+            background: #e0f2fe;
+            color: #0369a1;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .catatan-box {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            resize: none;
+            font-family: inherit;
+        }
+
+        /* Make the splash screen fade out faster for this page if needed, or same */
+    </style>
+</head>
+
+<body>
+
+    <!-- Reuse Splash Screen -->
+    <div id="splash-screen">
+        <div class="splash-content">
+            <img src="logo_splash.png" alt="Logo" class="splash-logo" style="width: 150px;">
+            <div class="loading-bar">
+                <div class="loading-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-upload">
+        <div class="card-upload">
+            <div class="upload-header">
+                <img src="logo_splash.png" style="width: 60px; margin-bottom: 1rem;">
+                <h2>Mau Cetak Apa?</h2>
+                <p style="color: #64748b;">Kirim filemu langsung ke kasir</p>
+            </div>
+
+            <div class="upload-options">
+                <div class="option-btn selected" onclick="selectType('Dokumen')">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <span>Dokumen</span>
+                </div>
+                <div class="option-btn" onclick="selectType('Foto')">
+                    <i class="fa-solid fa-image"></i>
+                    <span>Foto</span>
+                </div>
+            </div>
+
+            <form id="uploadForm" onsubmit="handleUpload(event)">
+                <input type="hidden" id="print-type" value="Dokumen">
+
+                <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                    <i class="fa-solid fa-cloud-arrow-up"
+                        style="font-size: 2rem; color: #94a3b8; margin-bottom: 10px;"></i>
+                    <p style="color: #64748b;">Tap untuk pilih file</p>
+                    <input type="file" id="file-input" style="display: none;" onchange="showFileInfo(this)">
+                    <div id="file-name" class="file-info"></div>
+                </div>
+
+                <textarea class="catatan-box" id="note" cols="30" rows="3"
+                    placeholder="Catatan (Cth: Print hitam putih 2 rangkap)"></textarea>
+
+                <button type="submit" class="btn btn-primary"
+                    style="width: 100%; padding: 1rem; font-size: 1.1rem; border-radius: 12px;">
+                    <i class="fa-solid fa-paper-plane"></i> KIRIM SEKARANG
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast">Notifikasi</div>
+
+    <script src="upload.js"></script>
+</body>
+
+</html>
