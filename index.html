@@ -271,9 +271,15 @@
                         <i class="fa-solid fa-upload"></i> Atau Upload File
                     </button>
                 </div>
-                <button class="btn btn-primary" style="width: 100%;" onclick="addProduct()">
-                    <i class="fa-solid fa-save"></i> SIMPAN PRODUK
-                </button>
+                <div style="display:flex; gap:10px;">
+                    <button id="btn-cancel-edit" class="btn btn-danger" style="width: 100%; display:none;"
+                        onclick="cancelEditProduct()">
+                        <i class="fa-solid fa-times"></i> BATAL
+                    </button>
+                    <button id="btn-save-product" class="btn btn-primary" style="width: 100%;" onclick="saveProduct()">
+                        <i class="fa-solid fa-save"></i> SIMPAN PRODUK
+                    </button>
+                </div>
             </div>
 
             <div class="card">
