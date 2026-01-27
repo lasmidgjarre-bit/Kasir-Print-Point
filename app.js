@@ -64,6 +64,40 @@ function switchTab(tabName) {
 // ... existing code ...
 
 // --- FILE MASUK LOGIC ---
+const PRICE_KEYS = {
+    bw: 'price_bw',
+    color: 'price_color',
+    copy: 'price_copy'
+};
+
+function savePrices() {
+    const bw = document.getElementById('price-bw').value;
+    const color = document.getElementById('price-color').value;
+    const copy = document.getElementById('price-copy').value;
+
+    localStorage.setItem(PRICE_KEYS.bw, bw);
+    localStorage.setItem(PRICE_KEYS.color, color);
+    localStorage.setItem(PRICE_KEYS.copy, copy);
+
+    // Optional: Visual feedback
+    // toast("Harga tersimpan!"); 
+}
+
+function loadPrices() {
+    const bw = localStorage.getItem(PRICE_KEYS.bw);
+    const color = localStorage.getItem(PRICE_KEYS.color);
+    const copy = localStorage.getItem(PRICE_KEYS.copy);
+
+    if (bw) document.getElementById('price-bw').value = bw;
+    if (color) document.getElementById('price-color').value = color;
+    if (copy) document.getElementById('price-copy').value = copy;
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+    loadPrices();
+});
+
 async function loadFiles() {
     const tbody = document.getElementById('files-body');
     console.log("Loading files... HTML Element:", tbody); // Debug Log V2
