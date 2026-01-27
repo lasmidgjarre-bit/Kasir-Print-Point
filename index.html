@@ -53,11 +53,42 @@
     <!-- QR Modal -->
     <div id="modal-qr" onclick="this.classList.remove('show')">
         <div class="qr-content" onclick="event.stopPropagation()">
-            <h2 style="margin-bottom: 1rem; color: var(--primary);">Scan untuk Upload</h2>
-            <img src="qr_upload.png" alt="QR Code Upload">
-            <p style="margin-top: 1rem; color: var(--secondary);">Pelanggan scan ini untuk kirim file</p>
+            <div class="qr-grid">
+                <!-- Left: QR Code -->
+                <div class="qr-col">
+                    <h2 style="margin-bottom: 1rem; color: var(--primary);">Scan untuk Upload</h2>
+                    <img src="qr_upload.png?v=2" alt="QR Code Upload">
+                    <p style="margin-top: 1rem; color: var(--secondary);">Pelanggan scan ini untuk kirim file</p>
+                </div>
+
+                <!-- Vertical Divider -->
+                <div class="qr-divider"></div>
+
+                <!-- Right: Price List -->
+                <div class="qr-col qr-prices">
+                    <h2 style="margin-bottom: 1rem; color: var(--primary);">Daftar Harga</h2>
+
+                    <div class="price-item">
+                        <div class="price-label">Print Hitam Putih</div>
+                        <div class="price-val">Rp 1.000</div>
+                    </div>
+                    <div class="price-item">
+                        <div class="price-label">Print Warna</div>
+                        <div class="price-val">Rp 2.000</div>
+                    </div>
+                    <div class="price-item">
+                        <div class="price-label">Fotocopy</div>
+                        <div class="price-val">Rp 500</div>
+                    </div>
+
+                    <div class="price-note">
+                        *Harga per lembar
+                    </div>
+                </div>
+            </div>
+
             <button class="btn btn-primary" onclick="document.getElementById('modal-qr').classList.remove('show')"
-                style="margin-top: 1rem; width: 100%;">Tutup</button>
+                style="margin-top: 2rem; width: 100%;">Tutup</button>
         </div>
     </div>
 
