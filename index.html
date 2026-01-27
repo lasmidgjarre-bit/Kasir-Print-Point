@@ -36,6 +36,9 @@
             <button class="nav-btn" onclick="document.getElementById('modal-qr').classList.add('show')">
                 <i class="fa-solid fa-qrcode"></i> QR Upload
             </button>
+            <button class="nav-btn" onclick="document.getElementById('modal-price').classList.add('show')">
+                <i class="fa-solid fa-tags"></i> Daftar Harga
+            </button>
             <nav>
                 <button class="nav-btn active" onclick="switchTab('kasir')">
                     <i class="fa-solid fa-cash-register"></i> Kasir
@@ -53,50 +56,47 @@
     <!-- QR Modal -->
     <div id="modal-qr" onclick="this.classList.remove('show')">
         <div class="qr-content" onclick="event.stopPropagation()">
-            <div class="qr-grid">
-                <!-- Left: QR Code -->
-                <div class="qr-col">
-                    <h2 style="margin-bottom: 1rem; color: var(--primary);">Scan untuk Upload</h2>
-                    <img src="qr_upload.png?v=2" alt="QR Code Upload">
-                    <p style="margin-top: 1rem; color: var(--secondary);">Pelanggan scan ini untuk kirim file</p>
-                </div>
+            <h2 style="margin-bottom: 1rem; color: var(--primary);">Scan untuk Upload</h2>
+            <img src="qr_upload.png?v=2" alt="QR Code Upload">
+            <p style="margin-top: 1rem; color: var(--secondary);">Pelanggan scan ini untuk kirim file</p>
+            <button class="btn btn-primary" onclick="document.getElementById('modal-qr').classList.remove('show')"
+                style="margin-top: 2rem; width: 100%;">Tutup</button>
+        </div>
+    </div>
 
-                <!-- Vertical Divider -->
-                <div class="qr-divider"></div>
+    <!-- Price List Modal -->
+    <div id="modal-price" onclick="this.classList.remove('show')">
+        <div class="qr-content" onclick="event.stopPropagation()" style="width: 600px; max-width: 90%;">
+            <h2 style="margin-bottom: 1rem; color: var(--primary);">Daftar Harga</h2>
 
-                <!-- Right: Price List -->
-                <!-- Right: Price List -->
-                <div class="qr-col qr-prices">
-                    <h2 style="margin-bottom: 1rem; color: var(--primary);">Daftar Harga</h2>
-
-                    <div class="table-container" style="max-height: 300px; overflow-y: auto;">
-                        <table class="price-table">
-                            <thead>
-                                <tr>
-                                    <th width="10%">No</th>
-                                    <th>Jasa/Pekerjaan</th>
-                                    <th>Harga</th>
-                                    <th>Satuan</th>
-                                    <th width="10%"></th>
-                                </tr>
-                            </thead>
-                            <tbody id="price-list-body">
-                                <!-- Dynamic Content -->
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <button class="btn btn-sm btn-secondary" onclick="addPriceRow()" style="margin-top: 10px;">
-                        <i class="fa-solid fa-plus"></i> Tambah Baris
-                    </button>
-
-                    <div class="price-note">
-                        *Edit langsung di tabel, tersimpan otomatis.
-                    </div>
-                </div>
+            <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                <table class="price-table">
+                    <thead>
+                        <tr>
+                            <th width="10%">No</th>
+                            <th>Jasa/Pekerjaan</th>
+                            <th>Harga</th>
+                            <th>Satuan</th>
+                            <th width="10%"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="price-list-body">
+                        <!-- Dynamic Content -->
+                    </tbody>
+                </table>
             </div>
 
-            <button class="btn btn-primary" onclick="document.getElementById('modal-qr').classList.remove('show')"
+            <div style="display:flex; justify-content:space-between; margin-top:10px;">
+                <button class="btn btn-sm btn-secondary" onclick="addPriceRow()">
+                    <i class="fa-solid fa-plus"></i> Tambah Baris
+                </button>
+            </div>
+
+            <div class="price-note">
+                *Edit langsung di tabel, tersimpan otomatis.
+            </div>
+
+            <button class="btn btn-primary" onclick="document.getElementById('modal-price').classList.remove('show')"
                 style="margin-top: 2rem; width: 100%;">Tutup</button>
         </div>
     </div>
