@@ -1,0 +1,64 @@
+/* Marquee / Running Text */
+.marquee-wrapper {
+    width: 100%;
+    overflow: hidden;
+    background: #f1f5f9;
+    /* Match body bg or slightly darker? Let's keep it transparent or subtle */
+    padding-top: 5px;
+    margin-bottom: 1rem;
+}
+
+.marquee-text {
+    display: inline-block;
+    white-space: nowrap;
+    animation: marquee-lr 15s linear infinite;
+    font-size: 0.9rem;
+    color: var(--danger);
+    /* Make it stand out a bit, or use secondary */
+    font-weight: 600;
+}
+
+/* LTR Animation (Left to Right) as requested */
+@keyframes marquee-lr {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(100%);
+        /* Moves towards right */
+        /* Actually, for the text to appear from left and go right across screen:
+           Start: -100% (width of element) usually starts it just outside left if container is wide.
+           Wait, if I want it to cross the container width:
+           0% : translate(-100%)
+           100%: translate(ContainerWidth) 
+           Using percentages refers to element width mostly in transform? 
+           Actually, `translateX(100%)` moves it by its own width. 
+           To move across screen, usually we use viewport units or calc.
+           
+           Let's standard Right-to-Left approach reversed:
+           Standard: 100% (parent) -> -100% (self).
+           
+           My approach:
+           0% : translateX(-100%) (Hidden on left)
+           100% : translateX(500px) (Container width is max 500px).
+           
+           Better: use a container query logic or just simple calc.
+           Since container is max 500px, let's try a simpler approach or just use standard keyframes that work for generic width.
+        */
+        transform: translateX(500px);
+        /* Fixed width approx */
+    }
+}
+
+/* Better responsive animation */
+@keyframes marquee-lr-responsive {
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(100vw);
+        /* Cross the viewport/container */
+    }
+}

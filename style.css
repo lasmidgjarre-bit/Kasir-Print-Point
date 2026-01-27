@@ -280,9 +280,41 @@ tr:last-child td {
     align-items: center;
 }
 
-video,
-#image-result {
+width: 100%;
+height: 100%;
+object-fit: cover;
+}
+
+/* Running Text (Marquee) */
+.marquee-wrapper {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    overflow: hidden;
+    margin-top: 0.5rem;
+    white-space: nowrap;
+    position: relative;
+    /* Masking for fade effect at edges */
+    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+
+.marquee-text {
+    display: inline-block;
+    color: var(--danger);
+    /* Red color for prices */
+    font-weight: 600;
+    font-size: 0.95rem;
+    /* L -> R Animation */
+    animation: marquee-lr 15s linear infinite;
+}
+
+@keyframes marquee-lr {
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(500px);
+    }
+
+    /* 500px is container max-width */
 }
