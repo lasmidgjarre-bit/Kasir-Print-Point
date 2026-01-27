@@ -64,43 +64,44 @@ function switchTab(tabName) {
 // ... existing code ...
 
 // --- FILE MASUK LOGIC ---
-const tbody = document.getElementById('files-body');
-console.log("Loading files... HTML Element:", tbody); // Debug Log V2
-if (!tbody) {
-    console.error("FATAL: Element #files-body not found in DOM!");
-    toast("Error Sistem: Tabel file tidak ditemukan. Coba refresh.");
-    return;
-}
-tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Loading...</td></tr>';
+async function loadFiles() {
+    const tbody = document.getElementById('files-body');
+    console.log("Loading files... HTML Element:", tbody); // Debug Log V2
+    if (!tbody) {
+        console.error("FATAL: Element #files-body not found in DOM!");
+        toast("Error Sistem: Tabel file tidak ditemukan. Coba refresh.");
+        return;
+    }
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Loading...</td></tr>';
 
-const { data, error } = await db
-    .from('print_queue')
-    .select('*')
-    .order('created_at', { ascending: false });
+    const { data, error } = await db
+        .from('print_queue')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-if (error) {
-    console.error(error);
-    toast("Gagal ambil data file");
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Gagal mengambil data. Pastikan tabel database sudah dibuat.</td></tr>';
-    return;
-}
-
-tbody.innerHTML = '';
-if (data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Belum ada file masuk.</td></tr>';
-    return;
-}
-
-data.forEach(item => {
-    const tr = document.createElement('tr');
-    const date = new Date(item.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-
-    let statusBadge = `<span style="background:#e2e8f0; color:#475569; padding:4px 8px; border-radius:4px; font-size:0.8rem;">${item.status}</span>`;
-    if (item.status === 'Selesai') {
-        statusBadge = `<span style="background:#dcfce7; color:#16a34a; padding:4px 8px; border-radius:4px; font-size:0.8rem;">Selesai</span>`;
+    if (error) {
+        console.error(error);
+        toast("Gagal ambil data file");
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Gagal mengambil data. Pastikan tabel database sudah dibuat.</td></tr>';
+        return;
     }
 
-    tr.innerHTML = `
+    tbody.innerHTML = '';
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Belum ada file masuk.</td></tr>';
+        return;
+    }
+
+    data.forEach(item => {
+        const tr = document.createElement('tr');
+        const date = new Date(item.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+        let statusBadge = `<span style="background:#e2e8f0; color:#475569; padding:4px 8px; border-radius:4px; font-size:0.8rem;">${item.status}</span>`;
+        if (item.status === 'Selesai') {
+            statusBadge = `<span style="background:#dcfce7; color:#16a34a; padding:4px 8px; border-radius:4px; font-size:0.8rem;">Selesai</span>`;
+        }
+
+        tr.innerHTML = `
             <td>${date}</td>
             <td>
                 <div style="font-weight:600;">${item.tipe_print}</div>
@@ -122,8 +123,8 @@ data.forEach(item => {
                 </div>
             </td>
         `;
-    tbody.appendChild(tr);
-});
+        tbody.appendChild(tr);
+    });
 }
 
 async function markFileDone(id) {
