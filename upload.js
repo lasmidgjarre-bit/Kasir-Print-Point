@@ -130,3 +130,43 @@ async function uploadToSupabase(file) {
 
     return publicData.publicUrl;
 }
+
+// --- PRICE DISPLAY LOGIC ---
+const PRICE_STORAGE_KEY = 'custom_price_list';
+const DEFAULT_PRICES = [
+    { name: 'Print Hitam Putih', price: 'Rp 1.000', unit: 'lembar' },
+    { name: 'Print Warna', price: 'Rp 2.000', unit: 'lembar' },
+    { name: 'Fotocopy', price: 'Rp 500', unit: 'lembar' }
+];
+
+function openPriceModal() {
+    const modal = document.getElementById('modal-price-display');
+    const container = document.getElementById('price-list-container');
+
+    // Load data from LocalStorage (shared with cashier app)
+    let prices = [];
+    const stored = localStorage.getItem(PRICE_STORAGE_KEY);
+    if (stored) {
+        prices = JSON.parse(stored);
+    } else {
+        prices = DEFAULT_PRICES;
+    }
+
+    // Render List
+    container.innerHTML = prices.map(item => `
+        <div class="price-row-ad">
+            <div class="ad-name">${item.name}</div>
+            <div style="display:flex; align-items:center;">
+                <span class="ad-price-tag">${item.price}</span>
+                <span class="ad-unit">/${item.unit}</span>
+            </div>
+        </div>
+    `).join('');
+
+    // Show Modal
+    modal.classList.add('show');
+}
+
+function closePriceModal() {
+    document.getElementById('modal-price-display').classList.remove('show');
+}

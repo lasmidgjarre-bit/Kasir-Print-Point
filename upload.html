@@ -132,11 +132,25 @@
                 <h2>Mau Cetak Apa?</h2>
                 <p style="color: #64748b;">Kirim filemu langsung ke kasir</p>
 
-                <!-- Running Text -->
-                <div class="marquee-wrapper">
-                    <div class="marquee-text">
-                        Print Hitam Putih Rp. 1rb, Print Warna 2rb, Fotocopy Rp. 500
+                <!-- Check Price Button -->
+                <button class="btn-glow" onclick="openPriceModal()">
+                    <i class="fa-solid fa-tags"></i> Cek Daftar Harga
+                </button>
+            </div>
+
+            <!-- Price Display Modal (Advertising Style) -->
+            <div id="modal-price-display" class="modal-overlay" onclick="closePriceModal()">
+                <div class="modal-card" onclick="event.stopPropagation()">
+                    <div class="modal-header-ad">
+                        <h3>DAFTAR HARGA PROMO</h3>
+                        <p>Kualitas Terbaik, Harga Sahabat</p>
                     </div>
+
+                    <div id="price-list-container" class="price-list-ad">
+                        <!-- Prices will be injected here -->
+                    </div>
+
+                    <button class="btn-close-ad" onclick="closePriceModal()">Tutup</button>
                 </div>
             </div>
 

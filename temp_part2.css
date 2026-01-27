@@ -1,0 +1,155 @@
+}
+
+/* Glowing Button & Ad Style Modal */
+.btn-glow {
+    background: #fbbf24;
+    /* Amber-400 */
+    color: #b45309;
+    /* Amber-700 */
+    border: none;
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: 0 0 10px #fbbf24;
+    animation: pulse-glow 2s infinite;
+    width: 100%;
+    margin-top: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+@keyframes pulse-glow {
+    0% {
+        box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7);
+        transform: scale(1);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(251, 191, 36, 0);
+        transform: scale(1.02);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
+        transform: scale(1);
+    }
+}
+
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 9999;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px);
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+/* Modal Card (Ad Style) */
+.modal-card {
+    background: #fff;
+    width: 90%;
+    max-width: 400px;
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    animation: slide-up 0.3s ease-out;
+}
+
+@keyframes slide-up {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header-ad {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    padding: 1.5rem;
+    text-align: center;
+    color: white;
+}
+
+.modal-header-ad h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.modal-header-ad p {
+    margin: 5px 0 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+}
+
+.price-list-ad {
+    padding: 1.5rem;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.price-row-ad {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px dashed #e2e8f0;
+}
+
+.price-row-ad:last-child {
+    border-bottom: none;
+}
+
+.ad-name {
+    font-weight: 600;
+    color: #334155;
+    font-size: 1rem;
+}
+
+.ad-price-tag {
+    background: #eff6ff;
+    color: #2563eb;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.ad-unit {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-left: 5px;
+}
+
+.btn-close-ad {
+    width: 100%;
+    padding: 1rem;
+    border: none;
+    background: #f1f5f9;
+    color: #64748b;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-close-ad:hover {
+    background: #e2e8f0;
+}
