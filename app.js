@@ -64,33 +64,73 @@ function switchTab(tabName) {
 // ... existing code ...
 
 // --- FILE MASUK LOGIC ---
-const PRICE_KEYS = {
-    bw: 'price_bw',
-    color: 'price_color',
-    copy: 'price_copy'
-};
+const PRICE_STORAGE_KEY = 'custom_price_list';
 
-function savePrices() {
-    const bw = document.getElementById('price-bw').value;
-    const color = document.getElementById('price-color').value;
-    const copy = document.getElementById('price-copy').value;
+// Default Data
+const DEFAULT_PRICES = [
+    { name: 'Print Hitam Putih', price: 'Rp 1.000', unit: 'lembar' },
+    { name: 'Print Warna', price: 'Rp 2.000', unit: 'lembar' },
+    { name: 'Fotocopy', price: 'Rp 500', unit: 'lembar' }
+];
 
-    localStorage.setItem(PRICE_KEYS.bw, bw);
-    localStorage.setItem(PRICE_KEYS.color, color);
-    localStorage.setItem(PRICE_KEYS.copy, copy);
-
-    // Optional: Visual feedback
-    // toast("Harga tersimpan!"); 
-}
+let priceList = [];
 
 function loadPrices() {
-    const bw = localStorage.getItem(PRICE_KEYS.bw);
-    const color = localStorage.getItem(PRICE_KEYS.color);
-    const copy = localStorage.getItem(PRICE_KEYS.copy);
+    const stored = localStorage.getItem(PRICE_STORAGE_KEY);
+    if (stored) {
+        priceList = JSON.parse(stored);
+    } else {
+        priceList = [...DEFAULT_PRICES];
+    }
+    renderPriceTable();
+}
 
-    if (bw) document.getElementById('price-bw').value = bw;
-    if (color) document.getElementById('price-color').value = color;
-    if (copy) document.getElementById('price-copy').value = copy;
+function renderPriceTable() {
+    const tbody = document.getElementById('price-list-body');
+    if (!tbody) return; // Guard clause if modal not loaded
+
+    tbody.innerHTML = '';
+
+    priceList.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="text-align:center">${index + 1}</td>
+            <td><input type="text" value="${item.name}" class="table-input" onchange="updatePriceRow(${index}, 'name', this.value)" placeholder="Nama Jasa"></td>
+            <td><input type="text" value="${item.price}" class="table-input" onchange="updatePriceRow(${index}, 'price', this.value)" placeholder="Harga"></td>
+            <td><input type="text" value="${item.unit}" class="table-input" style="width: 60px;" onchange="updatePriceRow(${index}, 'unit', this.value)" placeholder="Satuan"></td>
+            <td style="text-align:center">
+                <button class="btn-icon-sm" onclick="deletePriceRow(${index})" style="color: #ef4444;">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function updatePriceRow(index, field, value) {
+    if (priceList[index]) {
+        priceList[index][field] = value;
+        savePrices();
+    }
+}
+
+function addPriceRow() {
+    priceList.push({ name: '', price: '', unit: '' });
+    renderPriceTable();
+    savePrices();
+}
+
+function deletePriceRow(index) {
+    if (confirm('Hapus baris ini?')) {
+        priceList.splice(index, 1);
+        renderPriceTable();
+        savePrices();
+    }
+}
+
+function savePrices() {
+    localStorage.setItem(PRICE_STORAGE_KEY, JSON.stringify(priceList));
 }
 
 // Init

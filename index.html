@@ -65,25 +65,33 @@
                 <div class="qr-divider"></div>
 
                 <!-- Right: Price List -->
+                <!-- Right: Price List -->
                 <div class="qr-col qr-prices">
                     <h2 style="margin-bottom: 1rem; color: var(--primary);">Daftar Harga</h2>
 
-                    <div class="price-item">
-                        <div class="price-label">Print Hitam Putih</div>
-                        <input type="text" class="price-input" id="price-bw" value="Rp 1.000" onchange="savePrices()">
-                    </div>
-                    <div class="price-item">
-                        <div class="price-label">Print Warna</div>
-                        <input type="text" class="price-input" id="price-color" value="Rp 2.000"
-                            onchange="savePrices()">
-                    </div>
-                    <div class="price-item">
-                        <div class="price-label">Fotocopy</div>
-                        <input type="text" class="price-input" id="price-copy" value="Rp 500" onchange="savePrices()">
+                    <div class="table-container" style="max-height: 300px; overflow-y: auto;">
+                        <table class="price-table">
+                            <thead>
+                                <tr>
+                                    <th width="10%">No</th>
+                                    <th>Jasa/Pekerjaan</th>
+                                    <th>Harga</th>
+                                    <th>Satuan</th>
+                                    <th width="10%"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="price-list-body">
+                                <!-- Dynamic Content -->
+                            </tbody>
+                        </table>
                     </div>
 
+                    <button class="btn btn-sm btn-secondary" onclick="addPriceRow()" style="margin-top: 10px;">
+                        <i class="fa-solid fa-plus"></i> Tambah Baris
+                    </button>
+
                     <div class="price-note">
-                        *Edit langsung di sini, tersimpan otomatis.
+                        *Edit langsung di tabel, tersimpan otomatis.
                     </div>
                 </div>
             </div>
