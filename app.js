@@ -189,11 +189,13 @@ async function deleteFile(id) {
 }
 
 // --- DATA BARANG (PRODUCT) LOGIC ---
+let editingProductId = null; // Track if we are editing
+
 async function loadProducts() {
     const tbody = document.getElementById('product-body');
     const datalist = document.getElementById('produk-list');
 
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Loading...</td></tr>'; // Updates colspan to 6
 
     const { data, error } = await db
         .from('produk')
@@ -225,6 +227,16 @@ async function loadProducts() {
             <td class="money">${formatRupiah(p.harga_beli)}</td>
             <td class="money">${formatRupiah(p.harga_jual)}</td>
             <td>${p.stok}</td>
+            <td>
+                <div style="display: flex; gap: 5px;">
+                    <button class="btn-icon" onclick="editProduct(${p.id})" style="background:#eff6ff; color:#3b82f6;" title="Edit">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button class="btn-icon" onclick="deleteProduct(${p.id})" style="background:#fef2f2; color:#ef4444;" title="Hapus">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </td>
         `;
         tbody.appendChild(tr);
 
@@ -235,7 +247,71 @@ async function loadProducts() {
     });
 }
 
-async function addProduct() {
+function editProduct(id) {
+    const product = productsCache.find(p => p.id === id);
+    if (!product) return;
+
+    // Populate Fields
+    document.getElementById('prod-nama').value = product.nama_barang;
+    document.getElementById('prod-stok').value = product.stok;
+    document.getElementById('prod-beli').value = product.harga_beli;
+    document.getElementById('prod-jual').value = product.harga_jual;
+
+    // Handle Image Preview
+    const imgPreview = document.getElementById('image-result');
+    const previewContainer = document.getElementById('image-preview-container');
+    if (product.foto_url) {
+        imgPreview.src = product.foto_url;
+        previewContainer.style.display = 'block';
+    } else {
+        imgPreview.src = '';
+        previewContainer.style.display = 'none';
+    }
+
+    // Set UI State
+    editingProductId = id;
+    document.getElementById('btn-save-product').innerHTML = '<i class="fa-solid fa-save"></i> UPDATE PRODUK';
+    document.getElementById('btn-cancel-edit').style.display = 'inline-block';
+
+    // Scroll to top
+    document.querySelector('.card').scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelEditProduct() {
+    editingProductId = null;
+
+    // Reset Fields
+    document.getElementById('prod-nama').value = '';
+    document.getElementById('prod-stok').value = '0';
+    document.getElementById('prod-beli').value = '';
+    document.getElementById('prod-jual').value = '';
+
+    // Reset Image
+    document.getElementById('image-result').src = '';
+    document.getElementById('image-preview-container').style.display = 'none';
+    currentImageFile = null;
+
+    // Reset UI State
+    document.getElementById('btn-save-product').innerHTML = '<i class="fa-solid fa-plus"></i> Tambah Produk';
+    document.getElementById('btn-cancel-edit').style.display = 'none';
+}
+
+async function deleteProduct(id) {
+    if (!confirm("Yakin ingin menghapus produk ini?")) return;
+
+    const { error } = await db
+        .from('produk')
+        .delete()
+        .eq('id', id);
+
+    if (error) toast("Gagal hapus produk");
+    else {
+        toast("Produk dihapus");
+        loadProducts();
+    }
+}
+
+async function saveProduct() { // Renamed from addProduct
     const nama = document.getElementById('prod-nama').value;
     const stok = document.getElementById('prod-stok').value;
     const beli = document.getElementById('prod-beli').value;
@@ -243,56 +319,69 @@ async function addProduct() {
 
     if (!nama) return toast("Nama barang wajib diisi!");
 
-    // Upload Image if exists
     let finalFotoUrl = null;
+
+    // 1. Upload new image if exists
     if (currentImageFile) {
         toast("Mengupload foto...");
         const fileName = `produk/${Date.now()}_${currentImageFile.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
-
-        const { data, error: uploadError } = await db.storage
-            .from('produk-images')
+        const { data, error } = await db.storage
+            .from('foto_produk')
             .upload(fileName, currentImageFile);
 
-        if (uploadError) {
-            console.error(uploadError);
-            return toast("Gagal upload foto: " + uploadError.message);
+        if (error) {
+            console.error(error);
+            return toast("Gagal upload foto");
         }
 
-        const { data: publicData } = db.storage
-            .from('produk-images')
+        const { data: publicUrlData } = db.storage
+            .from('foto_produk')
             .getPublicUrl(fileName);
 
-        finalFotoUrl = publicData.publicUrl;
+        finalFotoUrl = publicUrlData.publicUrl;
+    }
+    // 2. Keep existing image if editing and no new image uploaded
+    else if (editingProductId) {
+        const product = productsCache.find(p => p.id === editingProductId);
+        finalFotoUrl = product ? product.foto_url : null;
     }
 
-    const { error } = await db
-        .from('produk')
-        .insert({
-            nama_barang: nama,
-            stok: parseInt(stok || 0),
-            harga_beli: parseInt(beli || 0),
-            harga_jual: parseInt(jual || 0),
-            foto_url: finalFotoUrl
-        });
+    const payload = {
+        nama_barang: nama,
+        stok: parseInt(stok),
+        harga_beli: parseInt(beli) || 0,
+        harga_jual: parseInt(jual) || 0,
+        foto_url: finalFotoUrl
+    };
+
+    let error;
+
+    if (editingProductId) {
+        // UPDATE MODE
+        const { error: updateError } = await db
+            .from('produk')
+            .update(payload)
+            .eq('id', editingProductId);
+        error = updateError;
+    } else {
+        // INSERT MODE
+        const { error: insertError } = await db
+            .from('produk')
+            .insert([payload]);
+        error = insertError;
+    }
 
     if (error) {
         console.error(error);
-        toast("Gagal simpan produk: " + error.message);
+        toast(editingProductId ? "Gagal update produk" : "Gagal tambah produk");
     } else {
-        toast("Produk berhasil disimpan!");
-        // Reset form
-        document.getElementById('prod-nama').value = '';
-        document.getElementById('prod-stok').value = '0';
-        document.getElementById('prod-beli').value = '';
-        document.getElementById('prod-jual').value = '';
-        document.getElementById('prod-nama').value = '';
-        document.getElementById('prod-stok').value = '0';
-        document.getElementById('prod-beli').value = '';
-        document.getElementById('prod-jual').value = '';
-        resetCamera(); // Reset camera UI
+        toast(editingProductId ? "Produk diupdate" : "Produk disimpan");
         loadProducts();
+        cancelEditProduct(); // Reset form
     }
 }
+
+
 
 /* Splash Screen Logic */
 document.addEventListener('DOMContentLoaded', () => {
