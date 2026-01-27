@@ -364,21 +364,13 @@ async function saveProduct() { // Renamed from addProduct
     // 1. Upload new image if exists
     if (currentImageFile) {
         toast("Mengupload foto...");
-        const fileName = `produk/${Date.now()}_${currentImageFile.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
-        const { data, error } = await db.storage
-            .from('foto_produk')
-            .upload(fileName, currentImageFile);
-
-        if (error) {
-            console.error(error);
-            return toast("Gagal upload foto");
+        try {
+            // Upload ke ImageKit (Gunakan fungsi helper yang sudah ada di bawah)
+            finalFotoUrl = await uploadToImageKit(currentImageFile);
+        } catch (err) {
+            console.error(err);
+            return toast("Gagal upload foto ke ImageKit: " + err.message);
         }
-
-        const { data: publicUrlData } = db.storage
-            .from('foto_produk')
-            .getPublicUrl(fileName);
-
-        finalFotoUrl = publicUrlData.publicUrl;
     }
     // 2. Keep existing image if editing and no new image uploaded
     else if (editingProductId) {
