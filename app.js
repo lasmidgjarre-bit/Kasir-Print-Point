@@ -193,7 +193,31 @@ function savePrices() {
 // Init
 document.addEventListener('DOMContentLoaded', () => {
     loadPrices();
+
+    // Initial check
+    checkNewFiles();
+
+    // Poll every 10 seconds
+    setInterval(checkNewFiles, 10000);
 });
+
+async function checkNewFiles() {
+    const { count, error } = await db
+        .from('print_queue')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'Pending');
+
+    const badge = document.getElementById('file-badge');
+    if (!badge) return;
+
+    if (!error && count > 0) {
+        badge.innerText = count;
+        badge.style.display = 'inline-block';
+    } else {
+        badge.style.display = 'none';
+        badge.innerText = '';
+    }
+}
 
 async function loadFiles() {
     const tbody = document.getElementById('files-body');
@@ -264,10 +288,12 @@ async function markFileDone(id) {
         .update({ status: 'Selesai' })
         .eq('id', id);
 
-    if (error) toast("Gagal update status");
-    else {
+    if (error) {
+        toast("Gagal update status");
+    } else {
         toast("Status diperbarui");
         loadFiles();
+        checkNewFiles(); // Update badge immediately
     }
 }
 
@@ -375,8 +401,9 @@ function editProduct(id) {
     document.getElementById('btn-save-product').innerHTML = '<i class="fa-solid fa-save"></i> UPDATE PRODUK';
     document.getElementById('btn-cancel-edit').style.display = 'inline-block';
 
-    // Scroll to top
-    document.querySelector('.card').scrollIntoView({ behavior: 'smooth' });
+    // Scroll to form (Input Nama) to ensure user sees the form
+    document.getElementById('prod-nama').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('prod-nama').focus();
 }
 
 function cancelEditProduct() {
