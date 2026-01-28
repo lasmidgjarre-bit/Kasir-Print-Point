@@ -66,28 +66,33 @@ function switchTab(tabName) {
 // --- FILE MASUK LOGIC ---
 const PRICE_STORAGE_KEY = 'custom_price_list';
 
-// Default Data
-const DEFAULT_PRICES = [
-    { name: 'Print Hitam Putih', price: 'Rp 1.000', unit: 'lembar' },
-    { name: 'Print Warna', price: 'Rp 2.000', unit: 'lembar' },
-    { name: 'Fotocopy', price: 'Rp 500', unit: 'lembar' }
-];
-
 let priceList = [];
 
-function loadPrices() {
-    const stored = localStorage.getItem(PRICE_STORAGE_KEY);
-    if (stored) {
-        priceList = JSON.parse(stored);
+async function loadPrices() {
+    // Try fetch from DB first
+    const { data, error } = await db
+        .from('daftar_harga')
+        .select('*')
+        .order('id', { ascending: true });
+
+    if (!error && data.length > 0) {
+        priceList = data;
     } else {
-        priceList = [...DEFAULT_PRICES];
+        // Fallback or Empty
+        if (priceList.length === 0) {
+            // Keep existing if local has content? No, priority is DB.
+            // If DB empty, maybe init with default?
+            // Let's just show empty or default if really empty
+            // priceList = [...DEFAULT_PRICES]; // Optional: init default if DB empty
+        }
     }
     renderPriceTable();
+    updateCashierSuggestions();
 }
 
 function renderPriceTable() {
     const tbody = document.getElementById('price-list-body');
-    if (!tbody) return; // Guard clause if modal not loaded
+    if (!tbody) return;
 
     tbody.innerHTML = '';
 
@@ -95,9 +100,9 @@ function renderPriceTable() {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td style="text-align:center">${index + 1}</td>
-            <td><input type="text" value="${item.name}" class="table-input" onchange="updatePriceRow(${index}, 'name', this.value)" placeholder="Nama Jasa"></td>
-            <td><input type="text" value="${item.price}" class="table-input" onchange="updatePriceRow(${index}, 'price', this.value)" placeholder="Harga"></td>
-            <td><input type="text" value="${item.unit}" class="table-input" style="width: 60px;" onchange="updatePriceRow(${index}, 'unit', this.value)" placeholder="Satuan"></td>
+            <td><input type="text" value="${item.nama_jasa}" class="table-input" onchange="updatePriceRow(${index}, 'nama_jasa', this.value)" placeholder="Nama Jasa"></td>
+            <td><input type="text" value="${item.harga}" class="table-input" onchange="updatePriceRow(${index}, 'harga', this.value)" placeholder="Harga"></td>
+            <td><input type="text" value="${item.satuan}" class="table-input" style="width: 60px;" onchange="updatePriceRow(${index}, 'satuan', this.value)" placeholder="Satuan"></td>
             <td style="text-align:center">
                 <button class="btn-icon-sm" onclick="deletePriceRow(${index})" style="color: #ef4444;">
                     <i class="fa-solid fa-trash"></i>
@@ -111,26 +116,78 @@ function renderPriceTable() {
 function updatePriceRow(index, field, value) {
     if (priceList[index]) {
         priceList[index][field] = value;
-        savePrices();
+        // Mark as modified if needed, but for now we just hold in memory until Save button
     }
 }
 
 function addPriceRow() {
-    priceList.push({ name: '', price: '', unit: '' });
+    // Temporary ID for new items (will be replaced by DB ID after save)
+    priceList.push({ nama_jasa: '', harga: '', satuan: '' });
     renderPriceTable();
-    savePrices();
 }
 
 function deletePriceRow(index) {
+    // Just remove from memory list. 
+    // If it had an ID, we might need to track deletions, 
+    // but simplified approach: "Sync" = Delete All + Insert All is safer for ordering/consistency if list is small.
+    // OR: We'll just filter it out and save.
     if (confirm('Hapus baris ini?')) {
         priceList.splice(index, 1);
         renderPriceTable();
-        savePrices();
     }
 }
 
+async function savePricesToDb() {
+    const btn = event.target; // Capture button if possible
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+    btn.disabled = true;
+
+    try {
+        // Strategy: 
+        // 1. Delete all current rows (simplest way to ensure order and deletions match)
+        // 2. Insert all rows from memory
+        // This is acceptable for a small price list.
+
+        // Step 1: Delete all
+        const { error: delError } = await db
+            .from('daftar_harga')
+            .delete()
+            .neq('id', 0); // Delete all where ID != 0 (basically all)
+
+        if (delError) throw delError;
+
+        // Step 2: Prepare data (remove ID to let DB generate new ones, or keep if we want upscale logic)
+        // Actually, enable 'neq' delete requires a policy allowing delete.
+
+        const cleanData = priceList.map(p => ({
+            nama_jasa: p.nama_jasa,
+            harga: p.harga,
+            satuan: p.satuan
+        }));
+
+        if (cleanData.length > 0) {
+            const { error: insError } = await db
+                .from('daftar_harga')
+                .insert(cleanData);
+
+            if (insError) throw insError;
+        }
+
+        toast("Daftar harga berhasil disimpan!");
+        loadPrices(); // Reload to get new IDs
+    } catch (e) {
+        console.error(e);
+        toast("Gagal simpan ke database!");
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+// Deprecated: LocalStorage Save
 function savePrices() {
-    localStorage.setItem(PRICE_STORAGE_KEY, JSON.stringify(priceList));
+    // No-op or maybe save to local as backup
 }
 
 // Init
@@ -258,6 +315,7 @@ async function loadProducts() {
         const imgUrl = p.foto_url || 'https://via.placeholder.com/50?text=No+Img';
         tr.innerHTML = `
             <td>${p.id}</td>
+            <td>${p.kode_barang || '-'}</td>
             <td>
                 <div style="display:flex; align-items:center; gap:10px;">
                     <img src="${imgUrl}" style="width:50px; height:50px; object-fit:cover; border-radius:4px;">
@@ -285,6 +343,9 @@ async function loadProducts() {
         option.value = p.nama_barang;
         datalist.appendChild(option);
     });
+
+    // Update suggestions if currently selected type matches
+    updateCashierSuggestions();
 }
 
 function editProduct(id) {
@@ -293,6 +354,7 @@ function editProduct(id) {
 
     // Populate Fields
     document.getElementById('prod-nama').value = product.nama_barang;
+    document.getElementById('prod-kode').value = product.kode_barang || '';
     document.getElementById('prod-stok').value = product.stok;
     document.getElementById('prod-beli').value = product.harga_beli;
     document.getElementById('prod-jual').value = product.harga_jual;
@@ -322,6 +384,7 @@ function cancelEditProduct() {
 
     // Reset Fields
     document.getElementById('prod-nama').value = '';
+    document.getElementById('prod-kode').value = '';
     document.getElementById('prod-stok').value = '0';
     document.getElementById('prod-beli').value = '';
     document.getElementById('prod-jual').value = '';
@@ -353,6 +416,7 @@ async function deleteProduct(id) {
 
 async function saveProduct() { // Renamed from addProduct
     const nama = document.getElementById('prod-nama').value;
+    const kodeManual = document.getElementById('prod-kode').value;
     const stok = document.getElementById('prod-stok').value;
     const beli = document.getElementById('prod-beli').value;
     const jual = document.getElementById('prod-jual').value;
@@ -361,7 +425,6 @@ async function saveProduct() { // Renamed from addProduct
 
     let finalFotoUrl = null;
 
-    // 1. Upload new image if exists
     // 1. Upload new image if exists
     if (currentImageFile) {
         toast("Mengupload foto...");
@@ -389,6 +452,7 @@ async function saveProduct() { // Renamed from addProduct
 
     const payload = {
         nama_barang: nama,
+        kode_barang: kodeManual || null, // Use manual code if provided
         stok: parseInt(stok),
         harga_beli: parseInt(beli) || 0,
         harga_jual: parseInt(jual) || 0,
@@ -406,6 +470,34 @@ async function saveProduct() { // Renamed from addProduct
         error = updateError;
     } else {
         // INSERT MODE
+        // 1. Generate Kode Barang Automatically IF manual is empty
+        if (!payload.kode_barang) {
+            let newCode = '1001';
+            try {
+                const { data: maxData, error: maxError } = await db
+                    .from('produk')
+                    .select('kode_barang')
+                    .order('id', { ascending: false }) // Get latest added
+                    .limit(100); // Check last 100 to be safe
+
+                if (!maxError && maxData.length > 0) {
+                    // Clean and find max
+                    const codes = maxData
+                        .map(p => parseInt(p.kode_barang))
+                        .filter(c => !isNaN(c));
+
+                    if (codes.length > 0) {
+                        const maxCode = Math.max(...codes);
+                        newCode = (maxCode + 1).toString();
+                    }
+                }
+            } catch (e) {
+                console.error("Error generating code:", e);
+            }
+            payload.kode_barang = newCode;
+            console.log("Auto-generated Code:", newCode);
+        }
+
         const { error: insertError } = await db
             .from('produk')
             .insert([payload]);
@@ -542,13 +634,89 @@ function handleFileUpload(input) {
 }
 
 // --- KASIR LOGIC ---
-function autoFillHarga() {
-    const inputNama = document.getElementById('kasir-nama').value;
-    const product = productsCache.find(p => p.nama_barang === inputNama);
+function updateCashierSuggestions() {
+    const tipe = document.getElementById('kasir-tipe').value;
+    const datalist = document.getElementById('produk-list');
+    datalist.innerHTML = '';
+
+    if (tipe === 'Barang') {
+        productsCache.forEach(p => {
+            const option = document.createElement('option');
+            option.value = p.nama_barang;
+            datalist.appendChild(option);
+        });
+        document.getElementById('kasir-kode').disabled = false;
+        document.getElementById('kasir-kode').placeholder = "Scan...";
+    } else {
+        // Tipe Jasa
+        priceList.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.nama_jasa;
+            datalist.appendChild(option);
+        });
+
+        document.getElementById('kasir-kode').disabled = true;
+        document.getElementById('kasir-kode').placeholder = "-";
+        document.getElementById('kasir-kode').value = "";
+    }
+}
+
+function autoFillByCode() {
+    const inputKode = document.getElementById('kasir-kode').value;
+    if (!inputKode) return;
+
+    // Cari exact match atau yang mirip (opsional)
+    // Di sini kita pakai exact match kode
+    const product = productsCache.find(p => p.kode_barang === inputKode);
 
     if (product) {
+        // Ensure type is Barang
+        const typeSelect = document.getElementById('kasir-tipe');
+        if (typeSelect.value !== 'Barang') {
+            typeSelect.value = 'Barang';
+            updateCashierSuggestions();
+        }
+
+        document.getElementById('kasir-nama').value = product.nama_barang;
         document.getElementById('kasir-harga').value = product.harga_jual;
+
+        // Auto focus ke Qty agar cepat
         document.getElementById('kasir-qty').focus();
+        document.getElementById('kasir-qty').select();
+
+        toast(`Ketemu: ${product.nama_barang}`);
+    } else {
+        toast("Kode barang tidak ditemukan!");
+        // Reset jika salah
+        document.getElementById('kasir-nama').value = '';
+        document.getElementById('kasir-harga').value = '';
+    }
+}
+
+function autoFillHarga() {
+    const tipe = document.getElementById('kasir-tipe').value;
+    const inputNama = document.getElementById('kasir-nama').value;
+
+    if (tipe === 'Barang') {
+        const product = productsCache.find(p => p.nama_barang === inputNama);
+        if (product) {
+            document.getElementById('kasir-harga').value = product.harga_jual;
+            document.getElementById('kasir-qty').focus();
+        }
+    } else {
+        // Tipe Jasa
+        const service = priceList.find(p => p.nama_jasa === inputNama);
+        if (service) {
+            // Parse price string "Rp 1.000" -> 1000
+            // Remove non-digits
+            const priceString = service.harga.replace(/[^0-9]/g, '');
+            const price = parseInt(priceString);
+
+            if (!isNaN(price)) {
+                document.getElementById('kasir-harga').value = price;
+                document.getElementById('kasir-qty').focus();
+            }
+        }
     }
 }
 

@@ -139,32 +139,40 @@ const DEFAULT_PRICES = [
     { name: 'Fotocopy', price: 'Rp 500', unit: 'lembar' }
 ];
 
-function openPriceModal() {
+async function openPriceModal() {
     const modal = document.getElementById('modal-price-display');
     const container = document.getElementById('price-list-container');
 
-    // Load data from LocalStorage (shared with cashier app)
-    let prices = [];
-    const stored = localStorage.getItem(PRICE_STORAGE_KEY);
-    if (stored) {
-        prices = JSON.parse(stored);
-    } else {
-        prices = DEFAULT_PRICES;
+    container.innerHTML = '<div style="text-align:center; padding:20px;">Loading data harga...</div>';
+    modal.classList.add('show');
+
+    // Fetch from Supabase
+    const { data, error } = await db
+        .from('daftar_harga')
+        .select('*')
+        .order('id', { ascending: true });
+
+    if (error) {
+        container.innerHTML = '<div style="color:red; text-align:center;">Gagal memuat harga.</div>';
+        console.error(error);
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:20px;">Belum ada daftar harga.</div>';
+        return;
     }
 
     // Render List
-    container.innerHTML = prices.map(item => `
+    container.innerHTML = data.map(item => `
         <div class="price-row-ad">
-            <div class="ad-name">${item.name}</div>
+            <div class="ad-name">${item.nama_jasa}</div>
             <div style="display:flex; align-items:center;">
-                <span class="ad-price-tag">${item.price}</span>
-                <span class="ad-unit">/${item.unit}</span>
+                <span class="ad-price-tag">${item.harga}</span>
+                <span class="ad-unit">/${item.satuan}</span>
             </div>
         </div>
     `).join('');
-
-    // Show Modal
-    modal.classList.add('show');
 }
 
 function closePriceModal() {
