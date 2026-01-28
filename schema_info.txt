@@ -1,0 +1,9 @@
+Schema Check:
+
+--- Checking 'transaksi' ---
+Success! Found 1 row(s).
+Columns: ['id', 'tanggal', 'total_bayar']
+
+--- Checking 'detail_transaksi' ---
+Success! Found 1 row(s).
+Columns: ['id', 'transaksi_id', 'nama_barang', 'qty', 'harga', 'subtotal']

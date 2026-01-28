@@ -42,10 +42,15 @@ function switchTab(tabName) {
         if (target) target.classList.add('active');
 
         // Update nav button
-        let btnIndex = 0;
-        if (tabName === 'kasir') btnIndex = 0;
-        else if (tabName === 'files') btnIndex = 1;
-        else if (tabName === 'barang') btnIndex = 2;
+        // Note: Indices 0 and 1 are QR and Price List buttons
+        let btnIndex = 2;
+        if (tabName === 'kasir') btnIndex = 2;
+        else if (tabName === 'files') btnIndex = 3;
+        else if (tabName === 'barang') btnIndex = 4;
+        else if (tabName === 'laporan') {
+            btnIndex = 5;
+            loadDailyReport();
+        }
 
         const btns = document.querySelectorAll('.nav-btn');
         // Note: The nav buttons structure changed in index.html, need to be careful with index or use logic based on text
@@ -191,8 +196,39 @@ function savePrices() {
 }
 
 // Init
+// Init
 document.addEventListener('DOMContentLoaded', () => {
     loadPrices();
+
+    // Silently load products for cache (pass true to skip UI render if desired, but for now just load it)
+    // Actually, `loadProducts` renders to #product-body. Since Tab 3 is hidden, it's fine.
+    // But we need to make sure `updateCashierSuggestions` is called AFTER products are loaded.
+
+    // We'll modify loadProducts to return a promise and data
+    loadProducts().then(() => {
+        console.log("Products loaded for cache");
+        updateCashierSuggestions(); // Ensure cache is applied to activeSuggestionSource
+
+        // Hide Splash Screen
+        const splash = document.getElementById('splash-screen');
+        if (splash) {
+            splash.style.opacity = '0';
+            setTimeout(() => splash.style.display = 'none', 500);
+        }
+    }).catch(e => {
+        console.error("Init Error:", e);
+        // Ensure splash still hides on error
+        const splash = document.getElementById('splash-screen');
+        if (splash) splash.style.display = 'none';
+    });
+
+    // Safety Timeout for Splash Screen (in case loadProducts hangs)
+    setTimeout(() => {
+        const splash = document.getElementById('splash-screen');
+        if (splash && splash.style.display !== 'none') {
+            splash.style.display = 'none';
+        }
+    }, 3000);
 
     // Initial check
     checkNewFiles();
@@ -200,6 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Poll every 10 seconds
     setInterval(checkNewFiles, 10000);
 });
+
 
 async function checkNewFiles() {
     const { count, error } = await db
@@ -316,7 +353,7 @@ let editingProductId = null; // Track if we are editing
 
 async function loadProducts() {
     const tbody = document.getElementById('product-body');
-    const datalist = document.getElementById('produk-list');
+
 
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Loading...</td></tr>'; // Updates colspan to 6
 
@@ -332,45 +369,43 @@ async function loadProducts() {
     }
 
     productsCache = data; // Simpan untuk autocomplete
-    tbody.innerHTML = '';
-    datalist.innerHTML = ''; // Clear datalist
 
-    data.forEach(p => {
-        // Render Table
-        const tr = document.createElement('tr');
-        const imgUrl = p.foto_url || 'https://via.placeholder.com/50?text=No+Img';
-        tr.innerHTML = `
-            <td>${p.id}</td>
-            <td>${p.kode_barang || '-'}</td>
-            <td>
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <img src="${imgUrl}" style="width:50px; height:50px; object-fit:cover; border-radius:4px;">
-                    ${p.nama_barang}
-                </div>
-            </td>
-            <td class="money">${formatRupiah(p.harga_beli)}</td>
-            <td class="money">${formatRupiah(p.harga_jual)}</td>
-            <td>${p.stok}</td>
-            <td>
-                <div style="display: flex; gap: 5px;">
-                    <button class="btn-icon" onclick="editProduct(${p.id})" style="background:#eff6ff; color:#3b82f6;" title="Edit">
-                        <i class="fa-solid fa-pen"></i>
-                    </button>
-                    <button class="btn-icon" onclick="deleteProduct(${p.id})" style="background:#fef2f2; color:#ef4444;" title="Hapus">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                </div>
-            </td>
-        `;
-        tbody.appendChild(tr);
-
-        // Render Datalist for Autocomplete
-        const option = document.createElement('option');
-        option.value = p.nama_barang;
-        datalist.appendChild(option);
-    });
+    // Check if table exists (only on Data Barang tab or if loaded in background)
+    if (tbody) {
+        tbody.innerHTML = '';
+        data.forEach(p => {
+            // Render Table
+            const tr = document.createElement('tr');
+            const imgUrl = p.foto_url || 'https://via.placeholder.com/50?text=No+Img';
+            tr.innerHTML = `
+                <td>${p.id}</td>
+                <td>${p.kode_barang || '-'}</td>
+                <td>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <img src="${imgUrl}" style="width:50px; height:50px; object-fit:cover; border-radius:4px;">
+                        ${p.nama_barang}
+                    </div>
+                </td>
+                <td class="money">${formatRupiah(p.harga_beli)}</td>
+                <td class="money">${formatRupiah(p.harga_jual)}</td>
+                <td>${p.stok}</td>
+                <td>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="btn-icon" onclick="editProduct(${p.id})" style="background:#eff6ff; color:#3b82f6;" title="Edit">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button class="btn-icon" onclick="deleteProduct(${p.id})" style="background:#fef2f2; color:#ef4444;" title="Hapus">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
 
     // Update suggestions if currently selected type matches
+    // Note: This is also called in DOMContentLoaded, but good to have here if refreshed manually
     updateCashierSuggestions();
 }
 
@@ -561,7 +596,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Initial Load
 document.addEventListener('DOMContentLoaded', () => {
     loadProducts();
-    updateCartTable();
+    renderCart();
 });
 
 
@@ -675,6 +710,7 @@ function updateCashierSuggestions() {
     closeSuggestions();
 
     if (tipe === 'Barang') {
+        console.log("Updating suggestions from ProductsCache:", productsCache ? productsCache.length : "undefined"); // DEBUG
         activeSuggestionSource = productsCache.map(p => ({
             name: p.nama_barang,
             price: p.harga_jual,
@@ -697,48 +733,50 @@ function updateCashierSuggestions() {
     }
 }
 
-// Event Listener untuk Input Nama
-document.addEventListener('DOMContentLoaded', () => {
-    // ... potentially other inits
+// Event Listeners for Custom Dropdown are initialized here
+// We can keep them separate or merge. For clarity, keeping them here is fine.
+// ... potentially other inits
 
-    const inputNama = document.getElementById('kasir-nama');
-    const listElement = document.getElementById('custom-suggestions');
+const inputNama = document.getElementById('kasir-nama');
+const listElement = document.getElementById('custom-suggestions');
 
-    if (inputNama) {
-        // Handle Typing
-        inputNama.addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase();
-            if (query.length < 1) {
-                closeSuggestions();
-                return;
-            }
+if (inputNama) {
+    // Handle Typing
+    inputNama.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        console.log("Typing:", query, "Source Length:", activeSuggestionSource.length); // DEBUG
+        if (query.length < 1) {
+            closeSuggestions();
+            return;
+        }
 
+        const matches = activeSuggestionSource.filter(item =>
+            item.name.toLowerCase().includes(query)
+        );
+        console.log("Matches found:", matches.length); // DEBUG
+
+        renderSuggestions(matches, query);
+    });
+
+    // Handle Focus (Show all or recent?) -> Let's show filtered if value exists, or nothing
+    inputNama.addEventListener('focus', (e) => {
+        const query = e.target.value.toLowerCase();
+        if (query.length > 0) {
             const matches = activeSuggestionSource.filter(item =>
                 item.name.toLowerCase().includes(query)
             );
-
             renderSuggestions(matches, query);
-        });
-
-        // Handle Focus (Show all or recent?) -> Let's show filtered if value exists, or nothing
-        inputNama.addEventListener('focus', (e) => {
-            const query = e.target.value.toLowerCase();
-            if (query.length > 0) {
-                const matches = activeSuggestionSource.filter(item =>
-                    item.name.toLowerCase().includes(query)
-                );
-                renderSuggestions(matches, query);
-            }
-        });
-    }
-
-    // Close when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('#kasir-nama') && !e.target.closest('#custom-suggestions')) {
-            closeSuggestions();
         }
     });
+}
+
+// Close when clicking outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('#kasir-nama') && !e.target.closest('#custom-suggestions')) {
+        closeSuggestions();
+    }
 });
+
 
 function renderSuggestions(matches, query) {
     const listElement = document.getElementById('custom-suggestions');
@@ -767,6 +805,14 @@ function renderSuggestions(matches, query) {
 function selectSuggestion(item) {
     document.getElementById('kasir-nama').value = item.name;
     document.getElementById('kasir-harga').value = item.price;
+
+    // Set Kode Barang if available
+    if (item.data && item.data.kode_barang) {
+        document.getElementById('kasir-kode').value = item.data.kode_barang;
+    } else {
+        document.getElementById('kasir-kode').value = '';
+    }
+
     document.getElementById('kasir-qty').focus();
     closeSuggestions();
 }
@@ -910,4 +956,92 @@ async function checkout() {
 }
 
 // Init
-loadProducts();
+// --- LAPORAN LOGIC ---
+async function loadDailyReport() {
+    const tbody = document.getElementById('laporan-body');
+    const totalEl = document.getElementById('laporan-total');
+
+    if (!tbody || !totalEl) {
+        console.error("Laporan elements not found");
+        return;
+    }
+
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Loading data...</td></tr>';
+
+    // Get Start and End of Today (Local Time)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // 1. Fetch Transactions Headers First
+    // Note: Column is named 'tanggal', not 'created_at' based on schema check
+    const { data: transData, error: transError } = await db
+        .from('transaksi')
+        .select('*')
+        .gte('tanggal', today.toISOString())
+        .lt('tanggal', tomorrow.toISOString())
+        .order('tanggal', { ascending: false });
+
+    if (transError) {
+        console.error(transError);
+        // Show detailed error to help debugging
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red">Error: ${transError.message} <br> <small>${JSON.stringify(transError)}</small></td></tr>`;
+        return;
+    }
+
+    if (!transData || transData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Belum ada transaksi hari ini</td></tr>';
+        totalEl.innerText = formatRupiah(0);
+        return;
+    }
+
+    // 2. Fetch Details for these transactions manually
+    const transIds = transData.map(t => t.id);
+    const { data: detailData, error: detailError } = await db
+        .from('detail_transaksi')
+        .select('*')
+        .in('transaksi_id', transIds);
+
+    if (detailError) {
+        console.error(detailError);
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red">Gagal memuat detail transaksi</td></tr>';
+        return;
+    }
+
+    // 3. Map details to transactions
+    let grandTotal = 0;
+    tbody.innerHTML = '';
+
+    transData.forEach(trans => {
+        grandTotal += trans.total_bayar;
+        const time = new Date(trans.tanggal).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+        // Filter details for this transaction
+        const myDetails = detailData.filter(d => d.transaksi_id === trans.id);
+
+        if (myDetails.length > 0) {
+            myDetails.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                const displayTime = index === 0 ? `<strong>${time}</strong>` : '';
+                const displayId = index === 0 ? `#${trans.id}` : '';
+
+                tr.innerHTML = `
+                    <td>${displayTime}</td>
+                    <td>${displayId}</td>
+                    <td>${item.nama_barang}</td>
+                    <td style="text-align:center">${item.qty}</td>
+                    <td class="money">${formatRupiah(item.harga)}</td>
+                    <td class="money">${formatRupiah(item.subtotal)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            const trSep = document.createElement('tr');
+            trSep.style.height = '10px';
+            trSep.innerHTML = `<td colspan="6" style="border-bottom: 1px solid #eee;"></td>`;
+            tbody.appendChild(trSep);
+        }
+    });
+
+    totalEl.innerText = formatRupiah(grandTotal);
+}

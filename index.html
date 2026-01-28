@@ -50,6 +50,9 @@
                 <button class="nav-btn" onclick="switchTab('barang')">
                     <i class="fa-solid fa-box"></i> Data Barang
                 </button>
+                <button class="nav-btn" onclick="switchTab('laporan')">
+                    <i class="fa-solid fa-chart-line"></i> Laporan
+                </button>
             </nav>
         </div>
     </header>
@@ -314,12 +317,59 @@
                 </div>
             </div>
         </section>
+        <!-- Tab 4: Laporan Harian -->
+        <section id="tab-laporan" class="section tab-content">
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+                    <h2><i class="fa-solid fa-chart-line"></i> Laporan Penjualan Harian</h2>
+                    <div class="card" style="background: #ecfdf5; border: 1px solid #10b981; padding: 10px 20px;">
+                        <span style="display:block; font-size: 0.9em; color:#059669;">Total Omset Hari Ini</span>
+                        <strong style="font-size: 1.5em; color:#047857;" id="laporan-total">Rp 0</strong>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="product-table">
+                        <thead>
+                            <tr>
+                                <th>Jam</th>
+                                <th>ID Transaksi</th>
+                                <th>Item</th>
+                                <th>Qty</th>
+                                <th>Harga</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="laporan-body">
+                            <!-- Data will appear here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
     </main>
 
     <!-- Toast -->
     <div id="toast">Notifikasi</div>
 
     <!-- Logic -->
+    <script>
+        // Global Error Handler to catch syntax/runtime errors
+        window.onerror = function (msg, url, line, col, error) {
+            // Force hide splash so user can see something is wrong
+            document.getElementById('splash-screen').style.display = 'none';
+            alert("System Error: " + msg + "\nLine: " + line);
+        };
+
+        // Fail-safe: Force hide splash screen after 5 seconds if app.js hangs
+        setTimeout(() => {
+            const splash = document.getElementById('splash-screen');
+            if (splash && getComputedStyle(splash).display !== 'none') {
+                console.warn("Force hiding splash screen (timeout)");
+                splash.style.display = 'none';
+            }
+        }, 5000);
+    </script>
     <script src="app.js"></script>
 </body>
 
