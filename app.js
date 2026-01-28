@@ -661,31 +661,119 @@ function handleFileUpload(input) {
 }
 
 // --- KASIR LOGIC ---
+// --- KASIR LOGIC ---
+let activeSuggestionSource = []; // Holds current data (products or services)
+
 function updateCashierSuggestions() {
     const tipe = document.getElementById('kasir-tipe').value;
-    const datalist = document.getElementById('produk-list');
-    datalist.innerHTML = '';
+    const inputKode = document.getElementById('kasir-kode');
+    const inputNama = document.getElementById('kasir-nama');
+
+    // Reset inputs
+    inputNama.value = '';
+    document.getElementById('kasir-harga').value = '';
+    closeSuggestions();
 
     if (tipe === 'Barang') {
-        productsCache.forEach(p => {
-            const option = document.createElement('option');
-            option.value = p.nama_barang;
-            datalist.appendChild(option);
-        });
-        document.getElementById('kasir-kode').disabled = false;
-        document.getElementById('kasir-kode').placeholder = "Scan...";
+        activeSuggestionSource = productsCache.map(p => ({
+            name: p.nama_barang,
+            price: p.harga_jual,
+            data: p
+        }));
+
+        inputKode.disabled = false;
+        inputKode.placeholder = "Scan...";
     } else {
         // Tipe Jasa
-        priceList.forEach(item => {
-            const option = document.createElement('option');
-            option.value = item.nama_jasa;
-            datalist.appendChild(option);
+        activeSuggestionSource = priceList.map(p => ({
+            name: p.nama_jasa,
+            price: parseInt(p.harga.replace(/[^0-9]/g, '')) || 0,
+            data: p
+        }));
+
+        inputKode.disabled = true;
+        inputKode.placeholder = "-";
+        inputKode.value = "";
+    }
+}
+
+// Event Listener untuk Input Nama
+document.addEventListener('DOMContentLoaded', () => {
+    // ... potentially other inits
+
+    const inputNama = document.getElementById('kasir-nama');
+    const listElement = document.getElementById('custom-suggestions');
+
+    if (inputNama) {
+        // Handle Typing
+        inputNama.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            if (query.length < 1) {
+                closeSuggestions();
+                return;
+            }
+
+            const matches = activeSuggestionSource.filter(item =>
+                item.name.toLowerCase().includes(query)
+            );
+
+            renderSuggestions(matches, query);
         });
 
-        document.getElementById('kasir-kode').disabled = true;
-        document.getElementById('kasir-kode').placeholder = "-";
-        document.getElementById('kasir-kode').value = "";
+        // Handle Focus (Show all or recent?) -> Let's show filtered if value exists, or nothing
+        inputNama.addEventListener('focus', (e) => {
+            const query = e.target.value.toLowerCase();
+            if (query.length > 0) {
+                const matches = activeSuggestionSource.filter(item =>
+                    item.name.toLowerCase().includes(query)
+                );
+                renderSuggestions(matches, query);
+            }
+        });
     }
+
+    // Close when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#kasir-nama') && !e.target.closest('#custom-suggestions')) {
+            closeSuggestions();
+        }
+    });
+});
+
+function renderSuggestions(matches, query) {
+    const listElement = document.getElementById('custom-suggestions');
+    listElement.innerHTML = '';
+
+    if (matches.length === 0) {
+        listElement.style.display = 'none';
+        return;
+    }
+
+    matches.slice(0, 10).forEach(match => { // Limit to 10
+        const li = document.createElement('li');
+        // Highlight match
+        const regex = new RegExp(`(${query})`, 'gi');
+        const highlightedName = match.name.replace(regex, '<strong>$1</strong>');
+
+        li.innerHTML = `${highlightedName} <span style="float:right; color:#64748b; font-size:0.8em;">Rp ${match.price.toLocaleString('id-ID')}</span>`;
+
+        li.onclick = () => selectSuggestion(match);
+        listElement.appendChild(li);
+    });
+
+    listElement.style.display = 'block';
+}
+
+function selectSuggestion(item) {
+    document.getElementById('kasir-nama').value = item.name;
+    document.getElementById('kasir-harga').value = item.price;
+    document.getElementById('kasir-qty').focus();
+    closeSuggestions();
+}
+
+function closeSuggestions() {
+    const listElement = document.getElementById('custom-suggestions');
+    if (listElement) listElement.style.display = 'none';
 }
 
 function autoFillByCode() {
@@ -720,31 +808,11 @@ function autoFillByCode() {
     }
 }
 
+// Removed old autoFillHarga as it is replaced by selectSuggestion and manual input is allowed
+// If user types manual and leaves, price stays empty or user fills it manually.
+// Or we could try to exact match on blur? Let's keep it simple: Select for auto-price. Manual for manual.
 function autoFillHarga() {
-    const tipe = document.getElementById('kasir-tipe').value;
-    const inputNama = document.getElementById('kasir-nama').value;
-
-    if (tipe === 'Barang') {
-        const product = productsCache.find(p => p.nama_barang === inputNama);
-        if (product) {
-            document.getElementById('kasir-harga').value = product.harga_jual;
-            document.getElementById('kasir-qty').focus();
-        }
-    } else {
-        // Tipe Jasa
-        const service = priceList.find(p => p.nama_jasa === inputNama);
-        if (service) {
-            // Parse price string "Rp 1.000" -> 1000
-            // Remove non-digits
-            const priceString = service.harga.replace(/[^0-9]/g, '');
-            const price = parseInt(priceString);
-
-            if (!isNaN(price)) {
-                document.getElementById('kasir-harga').value = price;
-                document.getElementById('kasir-qty').focus();
-            }
-        }
-    }
+    // Legacy placeholder if called from anywhere else, but removed from HTML
 }
 
 function addToCart() {
