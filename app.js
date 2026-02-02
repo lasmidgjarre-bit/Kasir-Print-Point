@@ -446,8 +446,10 @@ function renderProductRows(items) {
 }
 
 function filterProducts(query) {
+    const suggestionList = document.getElementById('search-suggestions');
     if (!query) {
         renderProductRows(productsCache);
+        if (suggestionList) suggestionList.style.display = 'none';
         return;
     }
     const lower = query.toLowerCase();
@@ -456,7 +458,39 @@ function filterProducts(query) {
         (p.kode_barang && p.kode_barang.toLowerCase().includes(lower))
     );
     renderProductRows(filtered);
+
+    // Update Dropdown Suggestions
+    if (suggestionList) {
+        suggestionList.innerHTML = '';
+        if (filtered.length > 0) {
+            filtered.forEach(p => {
+                const li = document.createElement('li');
+                li.innerText = p.nama_barang;
+                li.onclick = () => selectSearchProduct(p.nama_barang);
+                suggestionList.appendChild(li);
+            });
+            suggestionList.style.display = 'block';
+        } else {
+            suggestionList.style.display = 'none';
+        }
+    }
 }
+
+function selectSearchProduct(name) {
+    const input = document.getElementById('search-product');
+    input.value = name;
+    filterProducts(name);
+    document.getElementById('search-suggestions').style.display = 'none';
+}
+
+// Global click to hide suggestions
+document.addEventListener('click', function (e) {
+    const container = document.getElementById('search-product').parentElement;
+    if (!container.contains(e.target)) {
+        const suggestionList = document.getElementById('search-suggestions');
+        if (suggestionList) suggestionList.style.display = 'none';
+    }
+});
 
 function generateUniqueCode() {
     // Generate simple 4 digit random code

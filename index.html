@@ -217,9 +217,13 @@
             <div class="flex-between" style="margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
                 <div style="display:flex; gap:10px; align-items:center; flex:1;">
                     <h2>Master Data</h2>
-                    <input type="text" id="search-product" placeholder="Cari barang..." class="form-input"
-                        style="max-width: 200px; padding: 6px 10px; font-size: 0.9em;"
-                        onkeyup="filterProducts(this.value)">
+                    <div style="position: relative;">
+                        <input type="text" id="search-product" placeholder="Cari barang..." class="form-input"
+                            style="width: 250px; padding: 6px 10px; font-size: 0.9em;"
+                            onkeyup="filterProducts(this.value)" autocomplete="off">
+                        <ul id="search-suggestions" class="suggestions-list"
+                            style="display:none; position: absolute; top: 100%; left: 0; width: 100%;"></ul>
+                    </div>
                 </div>
                 <div style="display: flex; gap: 0.5rem;">
                     <button class="btn btn-icon" onclick="openSupplierModal()"
