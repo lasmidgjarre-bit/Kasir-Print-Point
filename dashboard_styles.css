@@ -1,0 +1,178 @@
+/* --- DASHBOARD STYLES --- */
+.dashboard-grid {
+    display: grid;
+    /* Fit more items: min 160px allows 2 columns on mobile (360px+) and 5-6 on laptop */
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+    padding: 0.5rem 0;
+    max-width: 1000px;
+    margin: 0 auto;
+    /* Center the grid */
+}
+
+.dash-card {
+    background: var(--surface);
+    border-radius: 16px;
+    /* Slightly smaller radius */
+    padding: 1.5rem 1rem;
+    /* Compact padding */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    position: relative;
+    overflow: hidden;
+    height: 100%;
+    /* Uniform height */
+}
+
+.dash-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+    z-index: 1;
+}
+
+.dash-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.dash-icon {
+    font-size: 2.5rem;
+    /* Smaller icon */
+    margin-bottom: 0.8rem;
+    color: var(--primary);
+    transition: transform 0.3s;
+    z-index: 2;
+}
+
+.dash-card:hover .dash-icon {
+    transform: scale(1.1);
+}
+
+.dash-card h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    /* Compact font */
+    font-weight: 700;
+    color: var(--text);
+    z-index: 2;
+    line-height: 1.2;
+}
+
+.dash-card p {
+    margin: 0.3rem 0 0;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    z-index: 2;
+}
+
+/* Card Specific Colors */
+.card-kasir {
+    background: linear-gradient(145deg, #ffffff, #eff6ff);
+    border-left: 5px solid #2563eb;
+}
+
+.card-kasir .dash-icon {
+    color: #2563eb;
+}
+
+.card-files {
+    background: linear-gradient(145deg, #ffffff, #f0fdf4);
+    border-left: 5px solid #16a34a;
+}
+
+.card-files .dash-icon {
+    color: #16a34a;
+}
+
+.card-barang {
+    background: linear-gradient(145deg, #ffffff, #fff7ed);
+    border-left: 5px solid #ea580c;
+}
+
+.card-barang .dash-icon {
+    color: #ea580c;
+}
+
+.card-laporan {
+    background: linear-gradient(145deg, #ffffff, #fdf4ff);
+    border-left: 5px solid #c026d3;
+}
+
+.card-laporan .dash-icon {
+    color: #c026d3;
+}
+
+.card-settings {
+    background: linear-gradient(145deg, #ffffff, #f8fafc);
+    border-left: 5px solid #64748b;
+}
+
+.card-settings .dash-icon {
+    color: #64748b;
+}
+
+.card-qr {
+    background: linear-gradient(145deg, #ffffff, #ecfeff);
+    border-left: 5px solid #06b6d4;
+}
+
+.card-qr .dash-icon {
+    color: #06b6d4;
+}
+
+.card-price {
+    background: linear-gradient(145deg, #ffffff, #fffbeb);
+    border-left: 5px solid #f59e0b;
+}
+
+.card-price .dash-icon {
+    color: #f59e0b;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 480px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+        /* Force 2 cols on mobile */
+        gap: 10px;
+    }
+
+    .dash-card {
+        padding: 1rem 0.5rem;
+    }
+
+    .dash-icon {
+        font-size: 2rem;
+    }
+
+    .dash-card h3 {
+        font-size: 0.95rem;
+    }
+}
+
+/* Brand Title */
+.brand-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, #16a34a 0%, #0d9488 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+    margin: 0;
+    text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}

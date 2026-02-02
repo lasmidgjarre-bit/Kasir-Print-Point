@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="splash.css">
     <link rel="stylesheet" href="qr.css">
+    <link rel="stylesheet" href="dashboard_styles.css">
 
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -30,31 +31,32 @@
     </div>
 
     <!-- Header -->
-    <header>
-        <h1><i class="fa-solid fa-print"></i> Kasir Fotokopi</h1>
-        <div style="display: flex; gap: 10px;">
-            <button class="nav-btn" onclick="document.getElementById('modal-qr').classList.add('show')">
-                <i class="fa-solid fa-qrcode"></i> QR Upload
-            </button>
-            <button class="nav-btn" onclick="document.getElementById('modal-price').classList.add('show')">
-                <i class="fa-solid fa-tags"></i> Daftar Harga
-            </button>
-            <nav>
-                <button class="nav-btn active" onclick="switchTab('kasir')">
-                    <i class="fa-solid fa-cash-register"></i> Kasir
-                </button>
-                <button class="nav-btn" onclick="switchTab('files')" style="position: relative;">
-                    <i class="fa-solid fa-cloud-download"></i> File Masuk
-                    <span id="file-badge" class="badge"></span>
-                </button>
-                <button class="nav-btn" onclick="switchTab('barang')">
-                    <i class="fa-solid fa-box"></i> Data Barang
-                </button>
-                <button class="nav-btn" onclick="switchTab('laporan')">
-                    <i class="fa-solid fa-chart-line"></i> Laporan
-                </button>
-            </nav>
+    <header style="justify-content: center; position: relative;">
+        <button id="home-btn" class="nav-btn" onclick="goToDashboard()"
+            style="display:none; position: absolute; left: 20px;">
+            <i class="fa-solid fa-house"></i> Home
+        </button>
+
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <img src="logo_splash.png" alt="Logo" style="height: 50px;">
+            <h1 class="brand-title">Print Point Barombong</h1>
         </div>
+
+        <nav id="main-nav" style="display:none; position: absolute; right: 20px;">
+            <button class="nav-btn active" onclick="switchTab('kasir')">
+                <i class="fa-solid fa-cash-register"></i> Kasir
+            </button>
+            <button class="nav-btn" onclick="switchTab('files')" style="position: relative;">
+                <i class="fa-solid fa-cloud-download"></i> File Masuk
+                <span id="file-badge" class="badge"></span>
+            </button>
+            <button class="nav-btn" onclick="switchTab('barang')">
+                <i class="fa-solid fa-box"></i> Data Barang
+            </button>
+            <button class="nav-btn" onclick="switchTab('laporan')">
+                <i class="fa-solid fa-chart-line"></i> Laporan
+            </button>
+        </nav>
     </header>
 
     <!-- QR Modal -->
@@ -109,8 +111,50 @@
     </div>
 
     <main>
+        <!-- DASHBOARD MENU -->
+        <section id="dashboard" class="tab-content active" style="display: block;">
+            <div class="dashboard-grid">
+                <div class="dash-card card-kasir" onclick="switchTab('kasir')">
+                    <div class="dash-icon"><i class="fa-solid fa-cash-register"></i></div>
+                    <h3>Kasir</h3>
+                    <p>Mulai Transaksi</p>
+                </div>
+                <div class="dash-card card-files" onclick="switchTab('files')">
+                    <div class="dash-icon"><i class="fa-solid fa-cloud-download"></i></div>
+                    <h3>File Masuk</h3>
+                    <p>Dari Cloud / WA</p>
+                </div>
+                <div class="dash-card card-barang" onclick="switchTab('barang')">
+                    <div class="dash-icon"><i class="fa-solid fa-box"></i></div>
+                    <h3>Data Barang</h3>
+                    <p>Stok & Harga</p>
+                </div>
+                <div class="dash-card card-qr" onclick="document.getElementById('modal-qr').classList.add('show')">
+                    <div class="dash-icon"><i class="fa-solid fa-qrcode"></i></div>
+                    <h3>QR Upload</h3>
+                    <p>Scan Pelanggan</p>
+                </div>
+                <div class="dash-card card-price"
+                    onclick="document.getElementById('modal-price').classList.add('show')">
+                    <div class="dash-icon"><i class="fa-solid fa-tags"></i></div>
+                    <h3>Daftar Harga</h3>
+                    <p>Cek Pricelist</p>
+                </div>
+                <div class="dash-card card-laporan" onclick="switchTab('laporan')">
+                    <div class="dash-icon"><i class="fa-solid fa-chart-line"></i></div>
+                    <h3>Laporan</h3>
+                    <p>Omset & Analisis</p>
+                </div>
+                <div class="dash-card card-settings" onclick="alert('Fitur Pengaturan belum tersedia!')">
+                    <div class="dash-icon"><i class="fa-solid fa-gear"></i></div>
+                    <h3>Pengaturan</h3>
+                    <p>Tools & Sistem</p>
+                </div>
+            </div>
+        </section>
+
         <!-- TAB 1: KASIR -->
-        <section id="tab-kasir" class="tab-content active">
+        <section id="tab-kasir" class="tab-content">
             <div class="card">
                 <div class="form-row">
                     <div class="form-group" style="flex: 0 0 120px;">

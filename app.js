@@ -30,40 +30,47 @@ const toast = (message) => {
 
 // --- TABS LOGIC ---
 // --- TABS LOGIC ---
+// --- TABS LOGIC ---
 function switchTab(tabName) {
     console.log("Switching to:", tabName);
     try {
         // Hide all tabs
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
 
-        // Show selected
+        // Handle Dashboard vs Tabs
+        if (tabName === 'dashboard') {
+            document.getElementById('dashboard').classList.add('active');
+            document.getElementById('main-nav').style.display = 'none';
+            document.getElementById('home-btn').style.display = 'none';
+            return;
+        }
+
+        // Show specific tab
         const target = document.getElementById(`tab-${tabName}`);
         if (target) target.classList.add('active');
 
-        // Update nav button
-        // Note: Indices 0 and 1 are QR and Price List buttons
-        let btnIndex = 2;
-        if (tabName === 'kasir') btnIndex = 2;
-        else if (tabName === 'files') btnIndex = 3;
-        else if (tabName === 'barang') btnIndex = 4;
-        else if (tabName === 'laporan') {
-            btnIndex = 5;
-            loadDailyReport();
-        }
+        // Show Nav & Home Button
+        document.getElementById('main-nav').style.display = 'flex';
+        document.getElementById('home-btn').style.display = 'inline-flex';
 
-        const btns = document.querySelectorAll('.nav-btn');
-        // Note: The nav buttons structure changed in index.html, need to be careful with index or use logic based on text
-        // Improved logic: find button that calls this SwitchTab
-        // But simple index fix for now:
-        // Nav 1: Kasir, Nav 2: File Masuk, Nav 3: Data Barang
-        if (btns[btnIndex]) btns[btnIndex].classList.add('active');
+        // Update nav button active state
+        document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+
+        // Find button that calls this tab (simplified logic)
+        const buttons = document.querySelectorAll(`button[onclick="switchTab('${tabName}')"]`);
+        if (buttons.length > 0) buttons.forEach(b => b.classList.add('active'));
 
         if (tabName === 'barang') loadProducts();
         if (tabName === 'files') loadFiles();
+        if (tabName === 'laporan') loadDailyReport();
+
     } catch (e) {
         alert("Error switching tab: " + e.message);
     }
+}
+
+function goToDashboard() {
+    switchTab('dashboard');
 }
 
 // ... existing code ...
