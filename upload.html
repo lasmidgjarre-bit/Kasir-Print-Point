@@ -237,6 +237,48 @@
     <div id="toast">Notifikasi</div>
 
     <script src="upload.js"></script>
+    <script>
+        // --- VISITOR TRACKING LOGIC ---
+
+        // 1. Generate or Get Visitor ID (Simple UUID)
+        function getVisitorId() {
+            let vid = localStorage.getItem('print_point_visitor_id');
+            if (!vid) {
+                vid = crypto.randomUUID();
+                localStorage.setItem('print_point_visitor_id', vid);
+            }
+            return vid;
+        }
+
+        // 2. Access Public IP (Optional, best effort)
+        async function getIpAddress() {
+            try {
+                const res = await fetch('https://api.ipify.org?format=json');
+                const data = await res.json();
+                return data.ip;
+            } catch (e) {
+                console.warn("Failed to get IP", e);
+                return null;
+            }
+        }
+
+        // 3. Inject Analytics Data into Upload Payload
+        // We override the original uploadFile function or attach this data to the global scope 
+        // that upload.js can read. For simplicity, let's expose these as global methods 
+        // that upload.js triggers before insert.
+
+        window.analyticsData = {
+            visitor_id: getVisitorId(),
+            device_info: navigator.userAgent,
+            ip_address: null
+        };
+
+        // Fetch IP in background
+        getIpAddress().then(ip => {
+            window.analyticsData.ip_address = ip;
+        });
+
+    </script>
 </body>
 
 </html>

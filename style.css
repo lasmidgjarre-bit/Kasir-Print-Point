@@ -512,6 +512,21 @@ video,
     background: #e2e8f0;
 }
 
+/* Form Styles */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    position: relative;
+    /* Crucial for suggestion list positioning */
+}
+
+.form-label {
+    font-weight: 500;
+    font-size: 0.9em;
+    color: var(--secondary);
+}
+
 /* --- MOBILE RESPONSIVENESS --- */
 @media (max-width: 768px) {
     body {
@@ -610,3 +625,5 @@ video,
 }
 
  
+.form-group { position: relative; }
+

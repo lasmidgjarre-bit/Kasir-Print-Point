@@ -235,8 +235,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Poll every 10 seconds
     setInterval(checkNewFiles, 10000);
+    // Check local storage for last active tab (if implemented)
+    // const savedTab = localStorage.getItem('activeTab');
+
+    cleanupOldFiles(); // Run cleanup on startup start
 });
 
+async function cleanupOldFiles() {
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+    const dateStr = twoDaysAgo.toISOString();
+
+    const { error } = await db
+        .from('print_queue')
+        .delete()
+        .lt('created_at', dateStr);
+
+    if (!error) console.log("Cleanup old files completed.");
+}
 
 async function checkNewFiles() {
     const { count, error } = await db
@@ -258,12 +274,7 @@ async function checkNewFiles() {
 
 async function loadFiles() {
     const tbody = document.getElementById('files-body');
-    console.log("Loading files... HTML Element:", tbody); // Debug Log V2
-    if (!tbody) {
-        console.error("FATAL: Element #files-body not found in DOM!");
-        toast("Error Sistem: Tabel file tidak ditemukan. Coba refresh.");
-        return;
-    }
+    if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Loading...</td></tr>';
 
     const { data, error } = await db
@@ -274,7 +285,7 @@ async function loadFiles() {
     if (error) {
         console.error(error);
         toast("Gagal ambil data file");
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Gagal mengambil data. Pastikan tabel database sudah dibuat.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Gagal mengambil data.</td></tr>';
         return;
     }
 
@@ -288,6 +299,18 @@ async function loadFiles() {
         const tr = document.createElement('tr');
         const date = new Date(item.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
+        // Analytics Info
+        let deviceInfo = '';
+        if (item.device_info) {
+            const isMobile = item.device_info.toLowerCase().includes('mobile');
+            const icon = isMobile ? 'fa-mobile-screen' : 'fa-laptop';
+            const deviceName = isMobile ? 'HP/Tablet' : 'PC/Laptop';
+            deviceInfo = `<div style="font-size:0.75rem; color:#94a3b8; margin-top:2px;">
+                <i class="fa-solid ${icon}"></i> ${deviceName} 
+                ${item.ip_address ? ` • <span title="${item.ip_address}">IP Detected</span>` : ''}
+            </div>`;
+        }
+
         let statusBadge = `<span style="background:#e2e8f0; color:#475569; padding:4px 8px; border-radius:4px; font-size:0.8rem;">${item.status}</span>`;
         if (item.status === 'Selesai') {
             statusBadge = `<span style="background:#dcfce7; color:#16a34a; padding:4px 8px; border-radius:4px; font-size:0.8rem;">Selesai</span>`;
@@ -298,6 +321,8 @@ async function loadFiles() {
             <td>
                 <div style="font-weight:600;">${item.tipe_print}</div>
                 <div style="font-size:0.8rem; color:#64748b;">${item.filename || 'No Name'}</div>
+                ${deviceInfo}
+            </td>
             </td>
             <td>${item.catatan || '-'}</td>
             <td>${statusBadge}</td>
@@ -353,9 +378,7 @@ let editingProductId = null; // Track if we are editing
 
 async function loadProducts() {
     const tbody = document.getElementById('product-body');
-
-
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">Loading...</td></tr>'; // Updates colspan to 6
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">Loading...</td></tr>';
 
     const { data, error } = await db
         .from('produk')
@@ -369,44 +392,88 @@ async function loadProducts() {
     }
 
     productsCache = data; // Simpan untuk autocomplete
+    renderProductRows(data);
+    updateCashierSuggestions();
 
-    // Check if table exists (only on Data Barang tab or if loaded in background)
-    if (tbody) {
-        tbody.innerHTML = '';
-        data.forEach(p => {
-            // Render Table
-            const tr = document.createElement('tr');
-            const imgUrl = p.foto_url || 'https://via.placeholder.com/50?text=No+Img';
-            tr.innerHTML = `
-                <td>${p.id}</td>
-                <td>${p.kode_barang || '-'}</td>
-                <td>
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <img src="${imgUrl}" style="width:50px; height:50px; object-fit:cover; border-radius:4px;">
-                        ${p.nama_barang}
-                    </div>
-                </td>
-                <td class="money">${formatRupiah(p.harga_beli)}</td>
-                <td class="money">${formatRupiah(p.harga_jual)}</td>
-                <td>${p.stok}</td>
-                <td>
-                    <div style="display: flex; gap: 5px;">
-                        <button class="btn-icon" onclick="editProduct(${p.id})" style="background:#eff6ff; color:#3b82f6;" title="Edit">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button class="btn-icon" onclick="deleteProduct(${p.id})" style="background:#fef2f2; color:#ef4444;" title="Hapus">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
+    // Auto-generate code for new entry if field is empty
+    if (!editingProductId) generateUniqueCode();
+}
+
+function renderProductRows(items) {
+    const tbody = document.getElementById('product-body');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+    if (items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 2rem; color: #64748b;">Tidak ada data barang.</td></tr>';
+        return;
     }
 
-    // Update suggestions if currently selected type matches
-    // Note: This is also called in DOMContentLoaded, but good to have here if refreshed manually
-    updateCashierSuggestions();
+    items.forEach(p => {
+        const tr = document.createElement('tr');
+        const imgUrl = p.foto_url || 'https://via.placeholder.com/50?text=No+Img';
+        tr.innerHTML = `
+            <td>${p.id}</td>
+            <td><span style="font-family:monospace; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${p.kode_barang || '-'}</span></td>
+            <td>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <img src="${imgUrl}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;">
+                    <div style="font-weight:500;">${p.nama_barang}</div>
+                </div>
+            </td>
+            <td class="money">${formatRupiah(p.harga_beli)}</td>
+            <td class="money">${formatRupiah(p.harga_jual)}</td>
+            <td style="font-weight:bold; color:${p.stok < 5 ? 'red' : 'inherit'}">${p.stok}</td>
+            <td>
+                <div style="display: flex; gap: 5px;">
+                    <button class="btn-icon" onclick="openStockModal(${p.id})" style="background:#f0fdf4; color:#16a34a;" title="Update Stok">
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                    </button>
+                     <button class="btn-icon" onclick="viewStockHistory(${p.id})" style="background:#fff7ed; color:#ea580c;" title="Riwayat Stok">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </button>
+                    <button class="btn-icon" onclick="editProduct(${p.id})" style="background:#eff6ff; color:#3b82f6;" title="Edit">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button class="btn-icon" onclick="deleteProduct(${p.id})" style="background:#fef2f2; color:#ef4444;" title="Hapus">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function filterProducts(query) {
+    if (!query) {
+        renderProductRows(productsCache);
+        return;
+    }
+    const lower = query.toLowerCase();
+    const filtered = productsCache.filter(p =>
+        p.nama_barang.toLowerCase().includes(lower) ||
+        (p.kode_barang && p.kode_barang.toLowerCase().includes(lower))
+    );
+    renderProductRows(filtered);
+}
+
+function generateUniqueCode() {
+    // Generate simple 4 digit random code
+    let code;
+    let exists = true;
+    let attempts = 0;
+
+    while (exists && attempts < 100) {
+        code = Math.floor(1000 + Math.random() * 9000).toString(); // 1000 - 9999
+        // Check collision in cache
+        const collision = productsCache.find(p => p.kode_barang === code);
+        if (!collision) exists = false;
+        attempts++;
+    }
+
+    const input = document.getElementById('prod-kode');
+    if (input) input.value = code;
 }
 
 function editProduct(id) {
@@ -414,6 +481,7 @@ function editProduct(id) {
     if (!product) return;
 
     // Populate Fields
+    editingProductId = id;
     document.getElementById('prod-nama').value = product.nama_barang;
     document.getElementById('prod-kode').value = product.kode_barang || '';
     document.getElementById('prod-stok').value = product.stok;
@@ -432,7 +500,6 @@ function editProduct(id) {
     }
 
     // Set UI State
-    editingProductId = id;
     document.getElementById('btn-save-product').innerHTML = '<i class="fa-solid fa-save"></i> UPDATE PRODUK';
     document.getElementById('btn-cancel-edit').style.display = 'inline-block';
 
@@ -446,7 +513,10 @@ function cancelEditProduct() {
 
     // Reset Fields
     document.getElementById('prod-nama').value = '';
-    document.getElementById('prod-kode').value = '';
+
+    // Auto Generate New Code
+    generateUniqueCode();
+
     document.getElementById('prod-stok').value = '0';
     document.getElementById('prod-beli').value = '';
     document.getElementById('prod-jual').value = '';
@@ -473,6 +543,59 @@ async function deleteProduct(id) {
     else {
         toast("Produk dihapus");
         loadProducts();
+    }
+}
+
+// 3. Stock History Viewer
+async function viewStockHistory(id) {
+    const product = productsCache.find(p => p.id === id);
+    if (!product) return;
+
+    document.getElementById('history-title').innerText = `Riwayat: ${product.nama_barang}`;
+    document.getElementById('modal-history').classList.add('show');
+
+    const tbody = document.getElementById('history-list-body');
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Loading...</td></tr>';
+
+    const { data, error } = await db
+        .from('stock_mutations')
+        .select('*')
+        .eq('produk_id', id)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red">Gagal load riwayat</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = '';
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Belum ada riwayat</td></tr>';
+    } else {
+        data.forEach(m => {
+            const tr = document.createElement('tr');
+
+            // Format Date
+            const date = new Date(m.created_at).toLocaleString('id-ID');
+
+            // Format Type Badge
+            let typeBadge = `<span style="padding:2px 6px; border-radius:4px; font-size:0.8em; background:#fee2e2; color:#b91c1c;">KELUAR</span>`;
+
+            if (m.tipe === 'MASUK') {
+                typeBadge = `<span style="padding:2px 6px; border-radius:4px; font-size:0.8em; background:#dcfce7; color:#15803d;">MASUK</span>`;
+            } else if (m.tipe === 'KOREKSI') {
+                typeBadge = `<span style="padding:2px 6px; border-radius:4px; font-size:0.8em; background:#fef3c7; color:#b45309;">KOREKSI</span>`;
+            }
+
+            tr.innerHTML = `
+                <td style="font-size:0.85em;">${date}</td>
+                <td>${typeBadge}</td>
+                <td style="font-size:0.9em;">${m.keterangan || '-'}</td>
+                <td style="font-weight:bold;">${m.qty}</td>
+                <td>${m.stok_sisa}</td>
+            `;
+            tbody.appendChild(tr);
+        });
     }
 }
 
@@ -822,6 +945,72 @@ function closeSuggestions() {
     if (listElement) listElement.style.display = 'none';
 }
 
+// --- Master Data Autocomplete (Duplicate Prevention) ---
+document.getElementById('prod-nama').addEventListener('input', (e) => {
+    updateMasterSuggestions(e.target.value);
+});
+
+// Close suggestions on click outside
+document.addEventListener('click', (e) => {
+    const listElement = document.getElementById('prod-suggestions');
+    if (!e.target.closest('#prod-nama') && listElement) {
+        listElement.style.display = 'none';
+    }
+});
+
+function updateMasterSuggestions(query) {
+    const listElement = document.getElementById('prod-suggestions');
+    if (!listElement) return;
+
+    if (!query || query.length < 2) {
+        listElement.style.display = 'none';
+        return;
+    }
+
+    // Filter products from global cache
+    const matches = productsCache.filter(p =>
+        p.nama_barang.toLowerCase().includes(query.toLowerCase())
+    );
+
+    if (matches.length === 0) {
+        listElement.style.display = 'none';
+        return;
+    }
+
+    listElement.innerHTML = '';
+    matches.slice(0, 5).forEach(item => {
+        const li = document.createElement('li');
+        // Highlight logic
+        const regex = new RegExp(`(${query})`, 'gi');
+        const highlighted = item.nama_barang.replace(regex, '<strong>$1</strong>');
+
+        li.innerHTML = `${highlighted} <small style="color:red; margin-left:5px;">(Sudah Ada)</small>`;
+        li.onclick = () => selectMasterSuggestion(item);
+        listElement.appendChild(li);
+    });
+
+    listElement.style.display = 'block';
+}
+
+function selectMasterSuggestion(item) {
+    document.getElementById('prod-nama').value = item.nama_barang;
+    document.getElementById('prod-suggestions').style.display = 'none';
+
+    // Warn the user
+    toast(`Perhatian: Produk "${item.nama_barang}" sudah terdaftar!`);
+
+    // Optional: Fill other fields to help editing
+    document.getElementById('prod-kode').value = item.kode_barang || 'Auto';
+    document.getElementById('prod-jual').value = item.harga_jual;
+    document.getElementById('prod-beli').value = item.harga_modal;
+    document.getElementById('prod-stok').value = item.stok;
+
+    // Store ID for update (if we had a hidden ID field, which we do: currentEditId)
+    // But since this is likely "Add New" context, we might just warn them.
+    // If we want to allow "Edit via Add", we'd need to set currentEditId.
+    // For now, duplicate prevention is the main goal.
+}
+
 function autoFillByCode() {
     const inputKode = document.getElementById('kasir-kode').value;
     if (!inputKode) return;
@@ -949,9 +1138,34 @@ async function checkout() {
         console.error(detailError);
         toast("Transaksi tersimpan tapi detail gagal!");
     } else {
+        // 3. Update Stock & Record Mutation (Only for Barang)
+        for (const item of cart) {
+            if (item.tipe === 'Barang') {
+                // Find Product ID
+                const product = productsCache.find(p => p.nama_barang === item.nama);
+                if (product) {
+                    const newStok = (product.stok || 0) - item.qty;
+
+                    // Update Product Stock
+                    await db.from('produk').update({ stok: newStok }).eq('id', product.id);
+
+                    // Record Mutation
+                    await db.from('stock_mutations').insert({
+                        produk_id: product.id,
+                        transaksi_id: transId,
+                        tipe: 'KELUAR',
+                        qty: item.qty,
+                        stok_sisa: newStok,
+                        keterangan: `Penjualan #${transId}`
+                    });
+                }
+            }
+        }
+
         toast(`Sukses! Transaksi #${transId} tersimpan.`);
         cart = [];
         renderCart();
+        loadProducts(); // Refresh stock display if on visual
     }
 }
 
@@ -1044,4 +1258,156 @@ async function loadDailyReport() {
     });
 
     totalEl.innerText = formatRupiah(grandTotal);
+}
+// --- INVENTORY SYSTEM LOGIC ---
+
+// 1. Supplier Management
+async function loadSuppliers() {
+    const tbody = document.getElementById('supplier-list-body');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center">Loading...</td></tr>';
+
+    const { data, error } = await db.from('suppliers').select('*').order('nama_toko', { ascending: true });
+
+    if (error) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:red">Gagal load supplier</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = '';
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center">Belum ada supplier</td></tr>';
+    } else {
+        data.forEach(s => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${s.nama_toko}</td>
+                <td>${s.kontak || '-'}</td>
+                <td>
+                    <button class="btn-icon-sm" onclick="deleteSupplier(${s.id})" style="color:red;"><i class="fa-solid fa-trash"></i></button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Also update dropdown in Stock Modal
+    updateSupplierDropdown(data);
+}
+
+function updateSupplierDropdown(suppliers) {
+    const select = document.getElementById('stock-supplier');
+    if (!select) return;
+
+    // Save current selection
+    const current = select.value;
+
+    select.innerHTML = '<option value="">- Pilih Supplier -</option>';
+    suppliers.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.nama_toko; // Store name for simplicity in description, or ID if relational
+        opt.innerText = s.nama_toko;
+        select.appendChild(opt);
+    });
+
+    if (current) select.value = current;
+}
+
+async function addSupplier() {
+    const nameEl = document.getElementById('supp-name');
+    const contactEl = document.getElementById('supp-contact');
+    const nama = nameEl.value.trim();
+    const kontak = contactEl.value.trim();
+
+    if (!nama) return toast("Nama toko harus diisi");
+
+    const { error } = await db.from('suppliers').insert({ nama_toko: nama, kontak: kontak });
+
+    if (error) {
+        toast("Gagal tambah supplier");
+    } else {
+        toast("Supplier ditambahkan");
+        nameEl.value = '';
+        contactEl.value = '';
+        loadSuppliers();
+    }
+}
+
+async function deleteSupplier(id) {
+    if (!confirm("Hapus supplier ini?")) return;
+    const { error } = await db.from('suppliers').delete().eq('id', id);
+    if (!error) loadSuppliers();
+}
+
+function openSupplierModal() {
+    document.getElementById('modal-supplier').classList.add('show');
+    loadSuppliers();
+}
+
+
+// 2. Stock Update with Mutation
+function openStockModal(id) {
+    const product = productsCache.find(p => p.id === id);
+    if (!product) return;
+
+    document.getElementById('stock-id').value = id;
+    document.getElementById('stock-name-display').innerText = product.nama_barang;
+    document.getElementById('stock-qty-in').value = '';
+    document.getElementById('stock-new-cost').value = product.harga_beli;
+
+    // Load suppliers to ensure dropdown is fresh
+    loadSuppliers();
+
+    document.getElementById('modal-stock').classList.add('show');
+    document.getElementById('stock-qty-in').focus();
+}
+
+async function saveStockUpdate() {
+    const id = document.getElementById('stock-id').value;
+    const qtyIn = parseInt(document.getElementById('stock-qty-in').value);
+    const newCost = parseInt(document.getElementById('stock-new-cost').value);
+    const supplier = document.getElementById('stock-supplier').value;
+
+    if (!qtyIn || qtyIn <= 0) {
+        toast("Jumlah stok harus diisi!");
+        return;
+    }
+
+    const product = productsCache.find(p => p.id == id);
+    if (!product) return;
+
+    const btn = event.target;
+    if (btn) { btn.innerHTML = 'Updating...'; btn.disabled = true; }
+
+    const newTotal = (product.stok || 0) + qtyIn;
+
+    // 1. Update Product
+    const startUpdate = { stok: newTotal };
+    if (newCost && newCost !== product.harga_beli) startUpdate.harga_beli = newCost;
+
+    const { error: prodError } = await db.from('produk').update(startUpdate).eq('id', id);
+
+    if (prodError) {
+        toast("Gagal update produk");
+        if (btn) { btn.innerHTML = 'Simpan & Update'; btn.disabled = false; }
+        return;
+    }
+
+    // 2. Transaksi Mutasi (Log History)
+    let desc = "Stok Masuk";
+    if (supplier) desc += ` dari ${supplier}`;
+
+    await db.from('stock_mutations').insert({
+        produk_id: id,
+        tipe: 'MASUK',
+        qty: qtyIn,
+        stok_sisa: newTotal,
+        keterangan: desc
+    });
+
+    toast("Stok berhasil diupdate!");
+    document.getElementById('modal-stock').classList.remove('show');
+    loadProducts();
+
+    if (btn) { btn.innerHTML = 'Simpan & Update'; btn.disabled = false; }
 }

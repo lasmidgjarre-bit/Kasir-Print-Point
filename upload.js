@@ -79,7 +79,11 @@ async function handleUpload(e) {
                 file_url: fileUrl,
                 catatan: note,
                 status: 'Baru',
-                filename: file.name
+                filename: file.name,
+                // Analytics
+                device_info: window.analyticsData?.device_info || navigator.userAgent,
+                ip_address: window.analyticsData?.ip_address,
+                visitor_id: window.analyticsData?.visitor_id
             });
 
         if (error) throw error;
