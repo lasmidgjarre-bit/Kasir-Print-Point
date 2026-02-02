@@ -140,6 +140,43 @@
     color: #f59e0b;
 }
 
+/* NEW MENU CARDS */
+.card-supplier {
+    background: linear-gradient(145deg, #ffffff, #eff6ff);
+    border-left: 5px solid #3b82f6;
+}
+
+.card-supplier .dash-icon {
+    color: #3b82f6;
+}
+
+.card-check {
+    background: linear-gradient(145deg, #ffffff, #f0fdf4);
+    border-left: 5px solid #22c55e;
+}
+
+.card-check .dash-icon {
+    color: #22c55e;
+}
+
+.card-buy {
+    background: linear-gradient(145deg, #ffffff, #fff7ed);
+    border-left: 5px solid #f97316;
+}
+
+.card-buy .dash-icon {
+    color: #f97316;
+}
+
+.card-print {
+    background: linear-gradient(145deg, #ffffff, #f5f3ff);
+    border-left: 5px solid #8b5cf6;
+}
+
+.card-print .dash-icon {
+    color: #8b5cf6;
+}
+
 /* Responsive Adjustments */
 @media (max-width: 480px) {
     .dashboard-grid {

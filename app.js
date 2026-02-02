@@ -509,7 +509,22 @@ function filterProducts(query) {
 
 function selectSearchProduct(name) {
     const input = document.getElementById('search-product');
-    input.value = name;
+    if (input) input.value = name;
+
+    // Check Stock Update Mode
+    if (typeof isStockUpdateMode !== 'undefined' && isStockUpdateMode) {
+        const product = productsCache.find(p => p.nama_barang === name);
+        if (product) {
+            openStockModal(product.id);
+            document.getElementById('search-suggestions').style.display = 'none';
+
+            // Reset Mode
+            isStockUpdateMode = false;
+            if (input) input.style.borderColor = "";
+            return;
+        }
+    }
+
     filterProducts(name);
     document.getElementById('search-suggestions').style.display = 'none';
 }
@@ -1447,21 +1462,98 @@ async function saveStockUpdate() {
         return;
     }
 
-    // 2. Transaksi Mutasi (Log History)
-    let desc = "Stok Masuk";
-    if (supplier) desc += ` dari ${supplier}`;
+    // 2. Transaksi Mutasi (Log History) - Placeholder
+    // Since we don't have a mutation table, we just toast
 
-    await db.from('stock_mutations').insert({
-        produk_id: id,
-        tipe: 'MASUK',
-        qty: qtyIn,
-        stok_sisa: newTotal,
-        keterangan: desc
-    });
+    toast("Stok Berhasil Diupdate");
+    if (btn) { btn.innerHTML = 'Simpan & Update'; btn.disabled = false; }
 
-    toast("Stok berhasil diupdate!");
     document.getElementById('modal-stock').classList.remove('show');
     loadProducts();
-
-    if (btn) { btn.innerHTML = 'Simpan & Update'; btn.disabled = false; }
 }
+
+// --- BARANG PAGE SPECIAL FEATURES ---
+
+function promptStockUpdate() {
+    // Click on search to focus
+    const searchInput = document.getElementById('search-product');
+    if (searchInput) {
+        isStockUpdateMode = true; // Set Flag
+        searchInput.focus();
+        searchInput.value = '';
+        toast("MODE BELANJA: Cari & Pilih Barang untuk Input Stok");
+        searchInput.scrollIntoView({ behavior: "smooth", block: "center" });
+        searchInput.style.borderColor = "#f97316"; // Visual cue
+    }
+}
+
+async function printReport(type) {
+    // Hide modal first
+    const modal = document.getElementById('modal-report');
+    if (modal) modal.classList.remove('show');
+
+    // Prepare Data
+    let dataToPrint = [];
+    let title = "Laporan";
+    let filterFunc = null;
+
+    if (type === 'kosong') {
+        filterFunc = (p) => p.stok <= 5;
+        title = "Laporan Stok Menipis/Kosong (<= 5)";
+    } else if (type === 'semua') {
+        filterFunc = () => true;
+        title = "Laporan Semua Stok Barang";
+    } else {
+        return toast("Laporan Histori (Masuk/Keluar) Belum Tersedia. Butuh Tabel Mutasi.");
+    }
+
+    // Check cache or fetch
+    let source = productsCache;
+    if (!source || source.length === 0) {
+        const { data } = await db.from('produk').select('*');
+        source = data || [];
+    }
+
+    if (filterFunc) {
+        dataToPrint = source.filter(filterFunc);
+    }
+
+    if (!dataToPrint || dataToPrint.length === 0) return toast("Data laporan kosong!");
+
+    // Simple Print Window
+    const printWindow = window.open('', '_blank');
+    const today = new Date().toLocaleString('id-ID');
+
+    let html = `
+    <html><head><title>${title}</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        h1 { text-align: center; margin-bottom: 5px; }
+        p { text-align: center; margin-top: 0; color: #666; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #333; padding: 8px 12px; text-align: left; }
+        th { background-color: #f3f4f6; }
+        tr:nth-child(even) { background-color: #f9fafb; }
+    </style>
+    </head><body>
+    <h1>${title}</h1>
+    <p>Dicetak pada: ${today}</p>
+    <table>
+        <thead><tr><th>Kode</th><th>Nama Barang</th><th>Stok</th><th>Harga Jual</th></tr></thead>
+        <tbody>
+            ${dataToPrint.map(p => `<tr>
+                <td>${p.kode_barang || '-'}</td>
+                <td>${p.nama_barang}</td>
+                <td>${p.stok}</td>
+                <td>Rp ${parseInt(p.harga_jual).toLocaleString('id-ID')}</td>
+            </tr>`).join('')}
+        </tbody>
+    </table>
+    <script>window.print();</script>
+    </body></html>
+    `;
+    printWindow.document.write(html);
+    printWindow.document.close();
+}
+
+

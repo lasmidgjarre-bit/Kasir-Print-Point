@@ -46,25 +46,49 @@
 
     <main>
         <!-- DATA BARANG MODULE -->
-        <div class="flex-between" style="margin-bottom: 1rem; flex-wrap: wrap; gap: 10px; margin-top: 20px;">
-            <div style="display:flex; gap:10px; align-items:center; flex:1;">
-                <h2>Master Data</h2>
-                <div style="position: relative;">
-                    <input type="text" id="search-product" placeholder="Cari barang..." class="form-input"
-                        style="width: 250px; padding: 6px 10px; font-size: 0.9em;" onkeyup="filterProducts(this.value)"
-                        autocomplete="off">
-                    <ul id="search-suggestions" class="suggestions-list"
-                        style="display:none; position: absolute; top: 100%; left: 0; width: 100%;"></ul>
-                </div>
+        <!-- MENU ICONS GRID -->
+        <div class="dashboard-grid" style="margin-top: 20px; margin-bottom: 30px;">
+            <!-- Data Supplier -->
+            <div class="dash-card card-supplier" onclick="openSupplierModal()">
+                <div class="dash-icon"><i class="fa-solid fa-truck-field"></i></div>
+                <h3>Data Supplier</h3>
+                <p>Kelola Vendor</p>
             </div>
-            <div style="display: flex; gap: 0.5rem;">
-                <button class="btn btn-icon" onclick="openSupplierModal()"
-                    style="background: #eff6ff; color: var(--primary); border: 1px solid var(--border);">
-                    <i class="fa-solid fa-truck-field"></i> Data Supplier
-                </button>
-                <button class="btn btn-icon" onclick="loadProducts()">
-                    <i class="fa-solid fa-rotate-right"></i> Refresh
-                </button>
+
+            <!-- Cek Stok -->
+            <div class="dash-card card-check"
+                onclick="document.getElementById('search-product').focus(); toast('Silakan scan atau ketik nama barang')">
+                <div class="dash-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+                <h3>Cek Stok</h3>
+                <p>Cari & Lihat</p>
+            </div>
+
+            <!-- Update Pembelian -->
+            <div class="dash-card card-buy" onclick="promptStockUpdate()">
+                <div class="dash-icon"><i class="fa-solid fa-cart-plus"></i></div>
+                <h3>Belanja Barang</h3>
+                <p>Input Stok Masuk</p>
+            </div>
+
+            <!-- Cetak Laporan -->
+            <div class="dash-card card-print" onclick="document.getElementById('modal-report').classList.add('show')">
+                <div class="dash-icon"><i class="fa-solid fa-print"></i></div>
+                <h3>Cetak Laporan</h3>
+                <p>Masuk/Keluar/Limit</p>
+            </div>
+        </div>
+
+        <!-- SEARCH BAR (Centered) -->
+        <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+            <div style="position: relative; width: 100%; max-width: 600px;">
+                <input type="text" id="search-product" placeholder="Cari barang untuk Cek Stok atau Update..."
+                    class="form-input"
+                    style="width: 100%; padding: 12px 20px; font-size: 1.1rem; border-radius: 50px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);"
+                    onkeyup="filterProducts(this.value)" autocomplete="off">
+                <i class="fa-solid fa-magnifying-glass"
+                    style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: #9ca3af;"></i>
+                <ul id="search-suggestions" class="suggestions-list"
+                    style="display:none; position: absolute; top: 100%; left: 0; width: 100%; z-index: 50;"></ul>
             </div>
         </div>
 
@@ -156,6 +180,38 @@
                         <!-- Product list will appear here -->
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Report Selection Modal -->
+        <div id="modal-report" class="modal-overlay" onclick="if(event.target === this) this.classList.remove('show')">
+            <div class="modal-card" style="max-width: 400px; text-align: center;">
+                <div class="modal-header-ad" style="background: linear-gradient(135deg, #6366f1, #4f46e5);">
+                    <h3><i class="fa-solid fa-print"></i> Cetak Laporan</h3>
+                    <p>Pilih Jenis Laporan Stok</p>
+                </div>
+                <div style="padding: 1.5rem; display: flex; flex-direction: column; gap: 10px;">
+                    <button class="btn" style="background: #e0f2fe; color: #0284c7; justify-content: flex-start;"
+                        onclick="printReport('masuk')">
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i> Laporan Stok Masuk
+                    </button>
+                    <button class="btn" style="background: #fef3c7; color: #d97706; justify-content: flex-start;"
+                        onclick="printReport('keluar')">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i> Laporan Stok Keluar
+                    </button>
+                    <button class="btn" style="background: #fee2e2; color: #dc2626; justify-content: flex-start;"
+                        onclick="printReport('kosong')">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Laporan Stok Menipis/Kosong
+                    </button>
+                    <button class="btn" style="background: #f3f4f6; color: #374151; justify-content: flex-start;"
+                        onclick="printReport('semua')">
+                        <i class="fa-solid fa-boxes-stacked"></i> Export Semua Data Barang
+                    </button>
+                </div>
+                <div style="padding: 0 1.5rem 1.5rem 1.5rem;">
+                    <button class="btn btn-secondary" style="width:100%"
+                        onclick="document.getElementById('modal-report').classList.remove('show')">Tutup</button>
+                </div>
             </div>
         </div>
 
