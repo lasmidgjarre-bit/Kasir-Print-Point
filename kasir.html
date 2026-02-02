@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasir - Print Point Barombong</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="splash.css">
+    <link rel="stylesheet" href="qr.css">
+    <link rel="stylesheet" href="dashboard_styles.css">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <div class="splash-content">
+            <img src="logo_splash.png" alt="Print Point Barombong Logo" class="splash-logo">
+            <div class="loading-bar">
+                <div class="loading-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header style="justify-content: center; position: relative;">
+        <!-- Home Button: Returns to Dashboard (index.html) -->
+        <a href="index.html" id="home-btn" class="nav-btn"
+            style="position: absolute; left: 20px; text-decoration: none; display: inline-flex;">
+            <i class="fa-solid fa-house"></i> Home
+        </a>
+
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <img src="logo_splash.png" alt="Logo" style="height: 50px;">
+            <h1 class="brand-title">Print Point Barombong</h1>
+        </div>
+    </header>
+
+    <main>
+        <!-- KASIR MODULE -->
+        <!-- No tabs, direct content -->
+        <div class="card" style="margin-top: 20px;">
+            <div class="form-row">
+                <div class="form-group" style="flex: 0 0 120px;">
+                    <label>Tipe</label>
+                    <select id="kasir-tipe" onchange="updateCashierSuggestions()">
+                        <option value="Barang">Barang</option>
+                        <option value="Jasa">Jasa</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex: 0 0 100px;">
+                    <label>Kode</label>
+                    <input type="text" id="kasir-kode" placeholder="Scan..." onchange="autoFillByCode()">
+                </div>
+                <div class="form-group" style="flex: 2;">
+                    <label>Nama Barang / Jasa</label>
+                    <div style="position: relative;">
+                        <input type="text" id="kasir-nama" placeholder="Ketik nama manual..." autocomplete="off"
+                            style="position: relative; z-index: 10;">
+                        <!-- Custom Autocomplete List -->
+                        <ul id="custom-suggestions" class="suggestions-list" style="display:none;"></ul>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Qty</label>
+                    <input type="number" id="kasir-qty" value="1" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Harga (@)</label>
+                    <input type="number" id="kasir-harga" placeholder="0">
+                </div>
+                <div class="form-group" style="flex: 0;">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-primary" onclick="addToCart()">
+                        <i class="fa-solid fa-plus"></i> Tambah
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Barang</th>
+                            <th width="100">Qty</th>
+                            <th>Harga</th>
+                            <th>Subtotal</th>
+                            <th width="50">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cart-body">
+                        <!-- Cart items will appear here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex-between">
+                <div></div>
+                <div class="total-display">
+                    <div class="total-label">Total Pembayaran</div>
+                    <div class="total-amount" id="grand-total">Rp 0</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 1.5rem;">
+                <button class="btn btn-success" onclick="checkout()">
+                    <i class="fa-solid fa-check-circle"></i> BAYAR & SIMPAN
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast -->
+    <div id="toast">Notifikasi</div>
+
+    <!-- Logic -->
+    <script>
+        // Global Error Handler
+        window.onerror = function (msg, url, line, col, error) {
+            document.getElementById('splash-screen').style.display = 'none';
+            alert("System Error: " + msg + "\nLine: " + line);
+        };
+        setTimeout(() => {
+            const splash = document.getElementById('splash-screen');
+            if (splash && getComputedStyle(splash).display !== 'none') {
+                splash.style.display = 'none';
+            }
+        }, 5000);
+    </script>
+    <script src="app.js"></script>
+</body>
+
+</html>

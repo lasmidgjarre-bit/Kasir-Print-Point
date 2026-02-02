@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Masuk - Print Point Barombong</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="splash.css">
+    <link rel="stylesheet" href="qr.css">
+    <link rel="stylesheet" href="dashboard_styles.css">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <div class="splash-content">
+            <img src="logo_splash.png" alt="Print Point Barombong Logo" class="splash-logo">
+            <div class="loading-bar">
+                <div class="loading-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header style="justify-content: center; position: relative;">
+        <!-- Home Button: Returns to Dashboard (index.html) -->
+        <a href="index.html" id="home-btn" class="nav-btn"
+            style="position: absolute; left: 20px; text-decoration: none; display: inline-flex;">
+            <i class="fa-solid fa-house"></i> Home
+        </a>
+
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <img src="logo_splash.png" alt="Logo" style="height: 50px;">
+            <h1 class="brand-title">Print Point Barombong</h1>
+        </div>
+    </header>
+
+    <main>
+        <!-- FILE MASUK MODULE -->
+        <div class="flex-between" style="margin-bottom: 1rem; margin-top: 20px;">
+            <h2>File Masuk</h2>
+            <button class="btn btn-icon" onclick="loadFiles()">
+                <i class="fa-solid fa-rotate-right"></i> Refresh
+            </button>
+        </div>
+
+        <div class="card">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Waktu</th>
+                            <th>Nama File</th>
+                            <th>Tipe</th>
+                            <th>Catatan</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="files-body">
+                        <!-- File list will appear here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast -->
+    <div id="toast">Notifikasi</div>
+
+    <!-- Logic -->
+    <script>
+        // Global Error Handler
+        window.onerror = function (msg, url, line, col, error) {
+            document.getElementById('splash-screen').style.display = 'none';
+            alert("System Error: " + msg + "\nLine: " + line);
+        };
+        setTimeout(() => {
+            const splash = document.getElementById('splash-screen');
+            if (splash && getComputedStyle(splash).display !== 'none') {
+                splash.style.display = 'none';
+            }
+        }, 5000);
+    </script>
+    <script src="app.js"></script>
+</body>
+
+</html>

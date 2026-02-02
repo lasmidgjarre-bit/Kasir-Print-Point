@@ -9,10 +9,10 @@ try:
     print("Connecting to Supabase...")
     client = create_client(SUPABASE_URL, SUPABASE_KEY)
     
-    print("Checking 'produk' table...")
-    # Try inserting a dummy product then delete it, or just select
-    res = client.table("produk").select("*").limit(1).execute()
-    print(f"Success! Data: {res.data}")
+    print("Checking 'print_queue' table...")
+    res = client.table("print_queue").select("*").limit(5).execute()
+    print(f"Success! Count: {len(res.data)}")
+    print(f"Data: {res.data}")
     
 except Exception as e:
     print(f"ERROR: {e}")

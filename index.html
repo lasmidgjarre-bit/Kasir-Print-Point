@@ -42,7 +42,8 @@
             <h1 class="brand-title">Print Point Barombong</h1>
         </div>
 
-        <nav id="main-nav" style="display:none; position: absolute; right: 20px;">
+        <!-- Nav is removed based on user request (Hilangkan) -->
+        <!-- <nav id="main-nav" style="display:none; position: absolute; right: 20px;">
             <button class="nav-btn active" onclick="switchTab('kasir')">
                 <i class="fa-solid fa-cash-register"></i> Kasir
             </button>
@@ -56,7 +57,7 @@
             <button class="nav-btn" onclick="switchTab('laporan')">
                 <i class="fa-solid fa-chart-line"></i> Laporan
             </button>
-        </nav>
+        </nav> -->
     </header>
 
     <!-- QR Modal -->
@@ -114,21 +115,25 @@
         <!-- DASHBOARD MENU -->
         <section id="dashboard" class="tab-content active" style="display: block;">
             <div class="dashboard-grid">
-                <div class="dash-card card-kasir" onclick="switchTab('kasir')">
+                <!-- Link to kasir.html -->
+                <a href="kasir.html" class="dash-card card-kasir" style="text-decoration: none;">
                     <div class="dash-icon"><i class="fa-solid fa-cash-register"></i></div>
                     <h3>Kasir</h3>
                     <p>Mulai Transaksi</p>
-                </div>
-                <div class="dash-card card-files" onclick="switchTab('files')">
+                </a>
+                <!-- Link to files.html -->
+                <a href="files.html" class="dash-card card-files" style="text-decoration: none; position: relative;">
+                    <span id="file-badge" class="notification-badge" style="display:none;"></span>
                     <div class="dash-icon"><i class="fa-solid fa-cloud-download"></i></div>
                     <h3>File Masuk</h3>
                     <p>Dari Cloud / WA</p>
-                </div>
-                <div class="dash-card card-barang" onclick="switchTab('barang')">
+                </a>
+                <!-- Link to barang.html -->
+                <a href="barang.html" class="dash-card card-barang" style="text-decoration: none;">
                     <div class="dash-icon"><i class="fa-solid fa-box"></i></div>
                     <h3>Data Barang</h3>
                     <p>Stok & Harga</p>
-                </div>
+                </a>
                 <div class="dash-card card-qr" onclick="document.getElementById('modal-qr').classList.add('show')">
                     <div class="dash-icon"><i class="fa-solid fa-qrcode"></i></div>
                     <h3>QR Upload</h3>

@@ -49,9 +49,9 @@ function switchTab(tabName) {
         const target = document.getElementById(`tab-${tabName}`);
         if (target) target.classList.add('active');
 
-        // Show Nav & Home Button
-        document.getElementById('main-nav').style.display = 'flex';
+        // Show Home Button Only (Nav is removed as per user request)
         document.getElementById('home-btn').style.display = 'inline-flex';
+        // document.getElementById('main-nav').style.display = 'flex'; <--- Removed to hide secondary nav
 
         // Update nav button active state
         document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -204,48 +204,72 @@ function savePrices() {
 
 // Init
 // Init
+// Init Logic based on Page
 document.addEventListener('DOMContentLoaded', () => {
-    loadPrices();
+    const path = window.location.pathname;
 
-    // Silently load products for cache (pass true to skip UI render if desired, but for now just load it)
-    // Actually, `loadProducts` renders to #product-body. Since Tab 3 is hidden, it's fine.
-    // But we need to make sure `updateCashierSuggestions` is called AFTER products are loaded.
-
-    // We'll modify loadProducts to return a promise and data
-    loadProducts().then(() => {
-        console.log("Products loaded for cache");
-        updateCashierSuggestions(); // Ensure cache is applied to activeSuggestionSource
-
-        // Hide Splash Screen
-        const splash = document.getElementById('splash-screen');
-        if (splash) {
-            splash.style.opacity = '0';
-            setTimeout(() => splash.style.display = 'none', 500);
-        }
-    }).catch(e => {
-        console.error("Init Error:", e);
-        // Ensure splash still hides on error
-        const splash = document.getElementById('splash-screen');
-        if (splash) splash.style.display = 'none';
-    });
-
-    // Safety Timeout for Splash Screen (in case loadProducts hangs)
+    // Common Logic
     setTimeout(() => {
         const splash = document.getElementById('splash-screen');
-        if (splash && splash.style.display !== 'none') {
+        if (splash && getComputedStyle(splash).display !== 'none') {
             splash.style.display = 'none';
         }
     }, 3000);
 
-    // Initial check
-    checkNewFiles();
+    // Dashboard (index.html) or Root
+    if (path.endsWith('index.html') || path.endsWith('/')) {
+        console.log("Initializing Dashboard...");
+        // Add specific dashboard init if needed
+        // For now, dashboard creates links, no special data needed except maybe checking file badge
+        checkNewFiles();
+        setInterval(checkNewFiles, 10000);
+        cleanupOldFiles();
+    }
 
-    // Poll every 10 seconds
-    setInterval(checkNewFiles, 10000);
-    // Check local storage for last active tab (if implemented)
-    // const savedTab = localStorage.getItem('activeTab');
+    // Kasir Page
+    if (path.includes('kasir.html')) {
+        console.log("Initializing Kasir Module...");
+        loadProducts().then(() => {
+            updateCashierSuggestions();
+            // Hide Splash
+            const splash = document.getElementById('splash-screen');
+            if (splash) {
+                splash.style.opacity = '0';
+                setTimeout(() => splash.style.display = 'none', 500);
+            }
+        });
 
-    cleanupOldFiles(); // Run cleanup on startup start
+        // Initial Cart Render
+        renderCart();
+    }
+
+    // Files Page
+    if (path.includes('files.html')) {
+        console.log("Initializing File Masuk Module...");
+        loadFiles();
+        // Hide Splash
+        const splash = document.getElementById('splash-screen');
+        if (splash) {
+            setTimeout(() => splash.style.display = 'none', 500);
+        }
+    }
+
+    // Barang Page
+    if (path.includes('barang.html')) {
+        console.log("Initializing Data Barang Module...");
+        loadProducts().then(() => {
+            // Hide Splash
+            const splash = document.getElementById('splash-screen');
+            if (splash) {
+                splash.style.opacity = '0';
+                setTimeout(() => splash.style.display = 'none', 500);
+            }
+        });
+    }
+
+    if (path.includes('laporan.html')) {
+        // loadReports();
+    }
 });
 
 async function cleanupOldFiles() {
@@ -492,10 +516,13 @@ function selectSearchProduct(name) {
 
 // Global click to hide suggestions
 document.addEventListener('click', function (e) {
-    const container = document.getElementById('search-product').parentElement;
-    if (!container.contains(e.target)) {
-        const suggestionList = document.getElementById('search-suggestions');
-        if (suggestionList) suggestionList.style.display = 'none';
+    const searchInput = document.getElementById('search-product');
+    if (searchInput) {
+        const container = searchInput.parentElement;
+        if (!container.contains(e.target)) {
+            const suggestionList = document.getElementById('search-suggestions');
+            if (suggestionList) suggestionList.style.display = 'none';
+        }
     }
 });
 
@@ -742,26 +769,9 @@ async function saveProduct() { // Renamed from addProduct
 
 
 
-/* Splash Screen Logic */
-document.addEventListener('DOMContentLoaded', () => {
-    // Wait for the loading animation (2s) plus a little buffer
-    setTimeout(() => {
-        const splash = document.getElementById('splash-screen');
-        if (splash) {
-            splash.classList.add('hidden');
-            // Remove from DOM after transition to free up resources
-            setTimeout(() => {
-                splash.remove();
-            }, 500);
-        }
-    }, 2500);
-});
 
-// Initial Load
-document.addEventListener('DOMContentLoaded', () => {
-    loadProducts();
-    renderCart();
-});
+
+
 
 
 // --- IMAGEKIT LOGIC ---
@@ -868,15 +878,15 @@ function updateCashierSuggestions() {
     const inputKode = document.getElementById('kasir-kode');
     const inputNama = document.getElementById('kasir-nama');
 
-    // Reset inputs
-    inputNama.value = '';
+    // Reset inputs - Removed to prevent clearing user input
+    // inputNama.value = '';
     document.getElementById('kasir-harga').value = '';
     closeSuggestions();
 
     if (tipe === 'Barang') {
         console.log("Updating suggestions from ProductsCache:", productsCache ? productsCache.length : "undefined"); // DEBUG
         activeSuggestionSource = productsCache.map(p => ({
-            name: p.nama_barang,
+            name: p.nama_barang || '',
             price: p.harga_jual,
             data: p
         }));
@@ -987,14 +997,17 @@ function closeSuggestions() {
 }
 
 // --- Master Data Autocomplete (Duplicate Prevention) ---
-document.getElementById('prod-nama').addEventListener('input', (e) => {
-    updateMasterSuggestions(e.target.value);
-});
+const prodNamaInput = document.getElementById('prod-nama');
+if (prodNamaInput) {
+    prodNamaInput.addEventListener('input', (e) => {
+        updateMasterSuggestions(e.target.value);
+    });
+}
 
 // Close suggestions on click outside
 document.addEventListener('click', (e) => {
     const listElement = document.getElementById('prod-suggestions');
-    if (!e.target.closest('#prod-nama') && listElement) {
+    if (listElement && !e.target.closest('#prod-nama')) {
         listElement.style.display = 'none';
     }
 });

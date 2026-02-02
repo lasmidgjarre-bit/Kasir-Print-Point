@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Barang - Print Point Barombong</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="splash.css">
+    <link rel="stylesheet" href="qr.css">
+    <link rel="stylesheet" href="dashboard_styles.css">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <div class="splash-content">
+            <img src="logo_splash.png" alt="Print Point Barombong Logo" class="splash-logo">
+            <div class="loading-bar">
+                <div class="loading-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header style="justify-content: center; position: relative;">
+        <!-- Home Button: Returns to Dashboard (index.html) -->
+        <a href="index.html" id="home-btn" class="nav-btn"
+            style="position: absolute; left: 20px; text-decoration: none; display: inline-flex;">
+            <i class="fa-solid fa-house"></i> Home
+        </a>
+
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <img src="logo_splash.png" alt="Logo" style="height: 50px;">
+            <h1 class="brand-title">Print Point Barombong</h1>
+        </div>
+    </header>
+
+    <main>
+        <!-- DATA BARANG MODULE -->
+        <div class="flex-between" style="margin-bottom: 1rem; flex-wrap: wrap; gap: 10px; margin-top: 20px;">
+            <div style="display:flex; gap:10px; align-items:center; flex:1;">
+                <h2>Master Data</h2>
+                <div style="position: relative;">
+                    <input type="text" id="search-product" placeholder="Cari barang..." class="form-input"
+                        style="width: 250px; padding: 6px 10px; font-size: 0.9em;" onkeyup="filterProducts(this.value)"
+                        autocomplete="off">
+                    <ul id="search-suggestions" class="suggestions-list"
+                        style="display:none; position: absolute; top: 100%; left: 0; width: 100%;"></ul>
+                </div>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-icon" onclick="openSupplierModal()"
+                    style="background: #eff6ff; color: var(--primary); border: 1px solid var(--border);">
+                    <i class="fa-solid fa-truck-field"></i> Data Supplier
+                </button>
+                <button class="btn btn-icon" onclick="loadProducts()">
+                    <i class="fa-solid fa-rotate-right"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="form-row">
+                <div class="form-group" style="flex: 2;">
+                    <label>Nama Barang</label>
+                    <input type="text" id="prod-nama" placeholder="Contoh: Kertas A4" autocomplete="off">
+                    <ul id="prod-suggestions" class="suggestions-list" style="display:none;"></ul>
+                </div>
+                <div class="form-group">
+                    <label>Kode</label>
+                    <input type="text" id="prod-kode" placeholder="Auto">
+                </div>
+                <div class="form-group">
+                    <label>Stok Awal</label>
+                    <input type="number" id="prod-stok" value="0">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Harga Beli (Modal)</label>
+                    <input type="number" id="prod-beli" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label>Harga Jual</label>
+                    <input type="number" id="prod-jual" placeholder="0">
+                </div>
+            </div>
+
+            <!-- Camera Upload Section -->
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label>Foto Produk</label>
+                <div id="camera-container" class="camera-container" style="display:none;">
+                    <video id="camera-preview" autoplay playsinline></video>
+                    <canvas id="camera-canvas" style="display:none;"></canvas>
+                </div>
+                <div id="image-preview-container" class="image-preview-container" style="display:none;">
+                    <img id="image-result" src="" alt="Preview Foto">
+                </div>
+
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                    <button class="btn btn-icon" onclick="startCamera()" id="btn-start-camera" style="flex:1;">
+                        <i class="fa-solid fa-camera"></i> Buka Kamera
+                    </button>
+                    <button class="btn btn-icon" onclick="takeSnapshot()" id="btn-take-snapshot"
+                        style="flex:1; display:none; background: var(--danger); color: white;">
+                        <i class="fa-solid fa-camera-retro"></i> Jepret
+                    </button>
+                    <button class="btn btn-icon" onclick="resetCamera()" id="btn-reset-camera"
+                        style="flex:1; display:none;">
+                        <i class="fa-solid fa-rotate-left"></i> Ulang
+                    </button>
+                </div>
+                <!-- Hidden input for file upload fallback -->
+                <input type="file" id="file-upload" accept="image/*" style="display:none"
+                    onchange="handleFileUpload(this)">
+                <button class="btn btn-icon" onclick="document.getElementById('file-upload').click()"
+                    style="width:100%; margin-top:0.5rem; border: 1px dashed var(--secondary);">
+                    <i class="fa-solid fa-upload"></i> Atau Upload File
+                </button>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button id="btn-cancel-edit" class="btn btn-danger" style="width: 100%; display:none;"
+                    onclick="cancelEditProduct()">
+                    <i class="fa-solid fa-times"></i> BATAL
+                </button>
+                <button id="btn-save-product" class="btn btn-primary" style="width: 100%;" onclick="saveProduct()">
+                    <i class="fa-solid fa-save"></i> SIMPAN PRODUK
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Kode</th>
+                            <th>Nama Barang</th>
+                            <th>Modal</th>
+                            <th>Harga Jual</th>
+                            <th>Stok</th>
+                            <th style="width: 100px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="product-body">
+                        <!-- Product list will appear here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Supplier Management Modal -->
+        <div id="modal-supplier" class="modal-overlay"
+            onclick="if(event.target === this) this.classList.remove('show')">
+            <div class="modal-card" style="max-width: 500px;">
+                <div class="modal-header-ad" style="background: linear-gradient(135deg, #0f172a, #334155);">
+                    <h3>Data Supplier</h3>
+                    <p>Kelola Toko Tempat Kulakan</p>
+                </div>
+                <div style="padding: 1.5rem;">
+                    <!-- Add New Supplier -->
+                    <div class="form-row" style="margin-bottom: 1rem;">
+                        <input type="text" id="supp-name" class="form-input" placeholder="Nama Toko">
+                        <input type="text" id="supp-contact" class="form-input" placeholder="Kontak/HP">
+                        <button class="btn btn-primary" onclick="addSupplier()">Tambah</button>
+                    </div>
+
+                    <!-- Supplier List -->
+                    <div class="table-container" style="max-height: 300px; overflow-y: auto;">
+                        <table class="price-table">
+                            <thead>
+                                <tr>
+                                    <th>Nama Toko</th>
+                                    <th>Kontak</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="supplier-list-body">
+                                <!-- Helper content -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-top: 1rem; text-align: right;">
+                        <button class="btn btn-secondary"
+                            onclick="document.getElementById('modal-supplier').classList.remove('show')">Tutup</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stock History Modal -->
+        <div id="modal-history" class="modal-overlay" onclick="if(event.target === this) this.classList.remove('show')">
+            <div class="modal-card" style="max-width: 600px;">
+                <div class="modal-header-ad" style="background: linear-gradient(135deg, #ea580c, #c2410c);">
+                    <h3>Kartu Stok</h3>
+                    <p id="history-title">Riwayat Barang</p>
+                </div>
+                <div style="padding: 1rem;">
+                    <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                        <table class="price-table">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Tipe</th>
+                                    <th>Ket.</th>
+                                    <th>Qty</th>
+                                    <th>Sisa</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-list-body">
+                                <!-- Dynamic -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top: 1rem; text-align: right;">
+                        <button class="btn btn-secondary"
+                            onclick="document.getElementById('modal-history').classList.remove('show')">Tutup</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Stock Update Modal (with Supplier) -->
+        <div id="modal-stock" class="modal-overlay" onclick="if(event.target === this) this.classList.remove('show')">
+            <div class="modal-card">
+                <div class="modal-header-ad">
+                    <h3>Update Stok</h3>
+                    <p id="stock-name-display">Nama Barang</p>
+                </div>
+                <div style="padding: 1.5rem;">
+                    <input type="hidden" id="stock-id">
+
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label class="form-label">Sumber / Supplier</label>
+                        <div style="display:flex; gap:5px;">
+                            <select id="stock-supplier" class="form-input" style="flex:1;">
+                                <option value="">- Pilih Supplier -</option>
+                            </select>
+                            <button class="btn-icon" onclick="openSupplierModal()" title="Kelola Supplier"
+                                style="background:#f1f5f9;">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label class="form-label">Tambahan Stok (Masuk)</label>
+                        <input type="number" id="stock-qty-in" class="form-input" placeholder="0" min="1">
+                        <small style="color: #64748b;">Isi jumlah barang yang baru datang/ditambahkan.</small>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 1.5rem;">
+                        <label class="form-label">Harga Beli Terbaru (Opsional)</label>
+                        <input type="number" id="stock-new-cost" class="form-input"
+                            placeholder="Update harga beli jika berubah">
+                    </div>
+
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn btn-secondary" style="flex:1"
+                            onclick="document.getElementById('modal-stock').classList.remove('show')">Batal</button>
+                        <button class="btn btn-primary" style="flex:1" onclick="saveStockUpdate()">Simpan &
+                            Update</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast -->
+    <div id="toast">Notifikasi</div>
+
+    <!-- Logic -->
+    <script>
+        // Global Error Handler
+        window.onerror = function (msg, url, line, col, error) {
+            document.getElementById('splash-screen').style.display = 'none';
+            alert("System Error: " + msg + "\nLine: " + line);
+        };
+        setTimeout(() => {
+            const splash = document.getElementById('splash-screen');
+            if (splash && getComputedStyle(splash).display !== 'none') {
+                splash.style.display = 'none';
+            }
+        }, 5000);
+    </script>
+    <script src="app.js"></script>
+</body>
+
+</html>
